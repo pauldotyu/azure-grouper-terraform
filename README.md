@@ -1,6 +1,6 @@
-# azure-grouper
+# azure-grouper-terraform
 
-This repo is not for learning Grouper. This repo is for demonstrating how to deploy the Grouper container in Azure Kubernetes Service. This deployment my not follow best practices around secrets management so please take care to ensure you harden your deployment.
+This repo is not for learning Grouper. This repo is for demonstrating how to deploy the Grouper container in Azure Kubernetes Service using Terraform. This deployment my not follow best practices around secrets management so please take care to ensure you harden your deployment.
 
 More info on Grouper can be found here: https://spaces.at.internet2.edu/display/Grouper/Grouper+container+documentation+for+v2.5
 
