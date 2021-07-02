@@ -38,7 +38,7 @@ stages:
         export ARM_TENANT_ID=$(tenant-id)
         export TF_CLI_CONFIG_FILE="$(terraformrc.secureFilePath)"
         terraform init
-        terraform workspace select $(workspace) || terraform workspace new $(workspace)
+        #terraform workspace select $(workspace) || terraform workspace new $(workspace)
         terraform plan -var-file="$(workspace).tfvars" -var="psql_login=$(psql-user)" -var="psql_password=$(psql-password)" -var="psql_password_grouper_encrypted=$(PSQL_PASSWORD_GROUPER_ENCRYPTED)" -var="aks_admin_group_object_id=$(aks-admin-group-object-id)" -out=$(System.DefaultWorkingDirectory)/$(workspace).tfplan
       displayName: Terraform Plan
       name: terraform_plan
@@ -49,3 +49,51 @@ stages:
         artifactName: 'tfplan'
       displayName: Publish $(workspace).tfplan
       name: publish_tfplan
+- stage: build
+  displayName: Build
+  condition: eq(dependencies.plan.result, 'Succeeded')
+  dependsOn: plan
+  jobs:
+  - job: review_plan
+    displayName: Review Plan
+    pool: Server
+    steps:
+    - task: ManualValidation@0
+      inputs:
+        notifyUsers: $(notifyUsers)
+        instructions: 'Have you taken a look at the terraform plan output?'
+      displayName: Review Plan
+      name: review_plan
+  - job: apply
+    displayName: Terraform Apply
+    condition: eq(dependencies.review_plan.result, 'Succeeded')
+    dependsOn: review_plan
+    steps:
+    - task: DownloadSecureFile@1
+      name: terraformrc
+      displayName: 'Download .terraformrc'
+      inputs:
+        secureFile: '.terraformrc'
+    - task: DownloadPipelineArtifact@2
+      inputs:
+        artifactName: tfplan
+        patterns: '**/*.tfplan'
+        path: $(System.DefaultWorkingDirectory)
+      displayName: Download $(workspace).tfplan
+      name: download_tfplan
+    - script: |
+        export ARM_CLIENT_ID=$(client-id) 
+        export ARM_CLIENT_SECRET=$(client-secret)
+        export ARM_SUBSCRIPTION_ID=$(main-subscription-id)
+        export ARM_TENANT_ID=$(tenant-id)
+        terraform init
+        #terraform workspace select $(workspace) || terraform workspace new $(workspace)
+        terraform apply --auto-approve $(System.DefaultWorkingDirectory)/$(workspace).tfplan
+        # tf output variables to pipeline variables
+        echo "##vso[task.setvariable variable=RG_NAME;isOutput=true]$(terraform output -raw rg_name)"
+        echo "##vso[task.setvariable variable=AKS_NAME;isOutput=true]$(terraform output -raw aks_name)"
+        echo "##vso[task.setvariable variable=ACR_NAME;isOutput=true]$(terraform output -raw acr_name)"
+        echo "##vso[task.setvariable variable=MANAGED_IDENTITY_CLIENT_ID;isOutput=true]$(terraform output -raw aks_managed_identity_client_id)"
+        echo "##vso[task.setvariable variable=MANAGED_IDENTITY_RESOURCE_ID;isOutput=true]$(terraform output -raw aks_managed_identity_resource_id)"
+      displayName: Terraform Apply
+      name: apply
