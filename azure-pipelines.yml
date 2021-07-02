@@ -221,6 +221,6 @@ stages:
         export ARM_TENANT_ID=$(tenant-id)
         export TF_CLI_CONFIG_FILE="$(terraformrc.secureFilePath)"
         terraform init
-        terraform destroy -var-file="$(namespace).tfvars" -var="psql_login=delete" -var="psql_password=delete" -var="psql_password_grouper_encrypted=delete" -var="aks_admin_group_object_id=delete" --auto-approve
+        terraform destroy -var-file="$(namespace).tfvars" -var="psql_login=$(psql-user)" -var="psql_password=$(psql-password)" -var="psql_password_grouper_encrypted=$(PSQL_PASSWORD_GROUPER_ENCRYPTED)" -var="aks_admin_group_object_id=$(aks-admin-group-object-id)" --auto-approve
       displayName: Destroy infrastructure
       workingDirectory: terraform
