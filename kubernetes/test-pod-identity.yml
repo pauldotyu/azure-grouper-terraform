@@ -1,0 +1,18 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pod-identity-test
+spec:
+  selector:
+    matchLabels:
+      app: pod-identity-test
+  template:
+    metadata:
+      labels:
+        app: pod-identity-test
+        aadpodidbinding: grouper-pod-identity
+    spec:
+      containers:
+        - name: azure-cli
+          image: mcr.microsoft.com/azure-cli
+          command: [ "/bin/bash", "-c", "sleep inf" ]

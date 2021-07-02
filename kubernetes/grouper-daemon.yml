@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: grouper-daemon
+  name: grouper-daemon
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grouper-daemon
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: grouper-daemon
+        aadpodidbinding: grouper-pod-identity
+    spec:
+      containers:
+        - image: <YOUR_ACR_NAME>.azurecr.io/grouper:<YOUR_CONTAINER_VERSION>
+          name: grouper-daemon
+          resources: {}
+          imagePullPolicy: IfNotPresent
+          args: ["daemon"]
+          env:
+            - name: GROUPER_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: grouper-secrets
+                  key: url
+            - name: GROUPER_DATABASE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: grouper-secrets
+                  key: username
+            - name: GROUPER_DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: grouper-secrets
+                  key: password
+          volumeMounts:
+            - name: azurekeyvault
+              mountPath: /mnt/secrets-store
+              readOnly: true
+      volumes:
+        - name: azurekeyvault
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: grouper-secrets-provider # this is the name of your SecretProviderClass
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: grouper-daemon
+  name: grouper-daemon
+spec:
+  ports:
+    - port: 8444
+      protocol: TCP
+      targetPort: 8444
+      name: grouper-daemon
+  selector:
+    app: grouper-daemon
