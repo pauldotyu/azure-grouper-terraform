@@ -99,3 +99,18 @@ stages:
       displayName: Terraform Apply
       name: apply
       workingDirectory: terraform
+  - job: acr_build
+    displayName: ACR Build
+    condition: eq(dependencies.apply.result, 'Succeeded')
+    dependsOn: apply
+    variables:
+      CONTAINER_VERSION: '$(Build.BuildId)'
+      ACR_NAME: $[ dependencies.apply.outputs['apply.ACR_NAME'] ]
+    steps:
+    - script: |
+        sed -i "s~<GROUPER_SYSTEM_PASSWORD>~$(grouper-system-password)~ " ./slashRoot/opt/grouper/grouperWebapp/WEB-INF/bin/assignGrouperSystemPassword.gsh; chmod +x ./slashRoot/opt/grouper/grouperWebapp/WEB-INF/bin/assignGrouperSystemPassword.gsh
+        az login --service-principal --username $(client-id) --password $(client-secret) --tenant $(tenant-id)
+        az account set -s $(main-subscription-id)
+        az acr build --registry $(ACR_NAME) --image grouper:$(CONTAINER_VERSION) .
+      displayName: Container Build
+      name: acr_build
