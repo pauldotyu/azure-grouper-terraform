@@ -164,10 +164,10 @@ stages:
       MANAGED_IDENTITY_CLIENT_ID: $[ dependencies.apply.outputs['apply.MANAGED_IDENTITY_CLIENT_ID'] ]
     steps:
     - script: |
-        sed -i "s/<YOUR_KV_NAME>/$(AKV_NAME)/; s/<YOUR_KV_TENANT_ID>/$(tenant-id)/" grouper-secrets-provider.yml
-        sed -i "s/<YOUR_ACR_NAME>/$(ACR_NAME)/; s/<YOUR_CONTAINER_VERSION>/$(CONTAINER_VERSION)/" grouper-daemon.yaml
-        sed -i "s/<YOUR_ACR_NAME>/$(ACR_NAME)/; s/<YOUR_CONTAINER_VERSION>/$(CONTAINER_VERSION)/" grouper-ws.yaml
-        sed -i "s/<YOUR_ACR_NAME>/$(ACR_NAME)/; s/<YOUR_CONTAINER_VERSION>/$(CONTAINER_VERSION)/" grouper-ui.yaml
+        sed -i "s/<YOUR_KV_NAME>/$(AKV_NAME)/; s/<YOUR_KV_TENANT_ID>/$(tenant-id)/" ./grouper-secrets-provider.yml
+        sed -i "s/<YOUR_ACR_NAME>/$(ACR_NAME)/; s/<YOUR_CONTAINER_VERSION>/$(CONTAINER_VERSION)/" ./grouper-daemon.yaml
+        sed -i "s/<YOUR_ACR_NAME>/$(ACR_NAME)/; s/<YOUR_CONTAINER_VERSION>/$(CONTAINER_VERSION)/" ./grouper-ws.yaml
+        sed -i "s/<YOUR_ACR_NAME>/$(ACR_NAME)/; s/<YOUR_CONTAINER_VERSION>/$(CONTAINER_VERSION)/" ./grouper-ui.yaml
       displayName: Update Kubernetes Manifests
       name: update_manifests
       workingDirectory: kubernetes
@@ -176,10 +176,10 @@ stages:
         az account set -s $(main-subscription-id)
         az aks get-credentials --resource-group $(RG_NAME) --name $(AKS_NAME) --admin
         kubectl create namespace $(namespace)) --dry-run=client -o yaml | kubectl apply -f -
-        kubectl apply -f grouper-secrets-provider.yml -n $(namespace)
-        kubectl apply -f grouper-daemon.yml -n $(namespace)
-        kubectl apply -f grouper-ws.yml -n $(namespace)
-        kubectl apply -f grouper-ui.yml -n $(namespace)
+        kubectl apply -f ./grouper-secrets-provider.yml -n $(namespace)
+        kubectl apply -f ./grouper-daemon.yml -n $(namespace)
+        kubectl apply -f ./grouper-ws.yml -n $(namespace)
+        kubectl apply -f ./grouper-ui.yml -n $(namespace)
         kubectl get all -n $(namespace)
       displayName: Apply Kubernetes Manifests
       name: kubectl_apply
@@ -214,6 +214,6 @@ stages:
         export ARM_TENANT_ID=$(tenant-id)
         export TF_CLI_CONFIG_FILE="$(terraformrc.secureFilePath)"
         terraform init
-        terraform destroy -var-file="$(namespace).tfvars" -var="psql_login=nothing" -var="psql_password=nothing" -var="psql_password_grouper_encrypted=nothing" -var="aks_admin_group_object_id=nothing" --auto-approve
+        terraform destroy -var-file="$(namespace).tfvars" -var="psql_login=delete" -var="psql_password=delete" -var="psql_password_grouper_encrypted=delete" -var="aks_admin_group_object_id=delete" --auto-approve
       displayName: Destroy infrastructure
       workingDirectory: terraform
