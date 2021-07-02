@@ -37,6 +37,7 @@ stages:
         export ARM_CLIENT_SECRET=$(client-secret)
         export ARM_SUBSCRIPTION_ID=$(main-subscription-id)
         export ARM_TENANT_ID=$(tenant-id)
+        export TF_CLI_CONFIG_FILE="$(terraformrc.secureFilePath)"
         terraform init
         terraform workspace select $(workspace) || terraform workspace new $(workspace)
         terraform plan -var-file="$(workspace).tfvars" -var="psql_login=$(psql-user)" -var="psql_password=$(psql-password)" -var="psql_password_grouper_encrypted=$(PSQL_PASSWORD_GROUPER_ENCRYPTED)" -out=$(System.DefaultWorkingDirectory)/$(workspace).tfplan
