@@ -114,3 +114,49 @@ stages:
         az acr build --registry $(ACR_NAME) --image grouper:$(CONTAINER_VERSION) .
       displayName: Container Build
       name: acr_build
+  - job: aks_features
+    displayName: Enable AKS Features
+    condition: eq(dependencies.acr_build.result, 'Succeeded')
+    dependsOn: 
+      - apply
+      - acr_build
+    variables:
+      RG_NAME: $[ dependencies.apply.outputs['apply.RG_NAME'] ]
+      AKS_NAME: $[ dependencies.apply.outputs['apply.AKS_NAME'] ]
+      MANAGED_IDENTITY_RESOURCE_ID: $[ dependencies.apply.outputs['apply.MANAGED_IDENTITY_RESOURCE_ID'] ]
+    steps:
+    - script: |
+        az login --service-principal --username $(client-id) --password $(client-secret) --tenant $(tenant-id)
+        az account set -s $(main-subscription-id)
+        az aks get-credentials -n $(AKS_NAME) -g $(RG_NAME) --admin
+
+        # Register features and providers
+        az provider register --namespace Microsoft.ContainerService
+        az feature register --name EnablePodIdentityPreview --namespace Microsoft.ContainerService
+        az feature register --name AKS-AzureKeyVaultSecretsProvider --namespace Microsoft.ContainerService
+
+        # Install the aks-preview extension
+        az extension add --name aks-preview
+
+        # Update the extension to make sure you have the latest version installed
+        az extension update --name aks-preview
+
+        # Enable Azure Key Vault provider for Secrets Store CSI driver (CSI driver)
+        csi=$(az aks show -g $RG_NAME -n $AKS_NAME --query addonProfiles.azureKeyvaultSecretsProvider.enabled)
+        if [ -z "$csi" ] || [ "$csi" == "false" ]
+        then
+              echo "addonProfiles.azureKeyvaultSecretsProvider being enabling now..."
+              az aks enable-addons -g $RG_NAME -n $AKS_NAME -a azure-keyvault-secrets-provider
+        else
+              echo "addonProfiles.azureKeyvaultSecretsProvider already enabled"
+        fi
+
+        # Enable Azure AD Pod Identity
+        az aks update -g $RG_NAME -n $AKS_NAME --enable-pod-identity
+
+        # Enable managed identity to be used on pods within a particular namespace
+        NAMESPACE=$(workspace)
+        POD_IDENTITY_NAME=grouper-pod-identity
+        az aks pod-identity add -g $RG_NAME --cluster-name $AKS_NAME --namespace $(workspace) --name $POD_IDENTITY_NAME --identity-resource-id $(MANAGED_IDENTITY_RESOURCE_ID)
+      displayName: Enable AKS add-ons
+      name: enable_aks_features

@@ -8,9 +8,9 @@ provider "azurerm" {
 
 data "azurerm_client_config" "current" {}
 
-data "http" "ifconfig" {
-  url = "http://ifconfig.me"
-}
+# data "http" "ifconfig" {
+#   url = "http://ifconfig.me"
+# }
 
 resource "random_pet" "grouper" {
   length    = 2
@@ -73,13 +73,13 @@ resource "azurerm_postgresql_firewall_rule" "grouper_rule_0" {
   end_ip_address      = "0.0.0.0"
 }
 
-resource "azurerm_postgresql_firewall_rule" "grouper_rule_1" {
-  name                = "ClientIP"
-  resource_group_name = azurerm_resource_group.grouper.name
-  server_name         = azurerm_postgresql_server.grouper.name
-  start_ip_address    = data.http.ifconfig.body
-  end_ip_address      = data.http.ifconfig.body
-}
+# resource "azurerm_postgresql_firewall_rule" "grouper_rule_1" {
+#   name                = "ClientIP"
+#   resource_group_name = azurerm_resource_group.grouper.name
+#   server_name         = azurerm_postgresql_server.grouper.name
+#   start_ip_address    = data.http.ifconfig.body
+#   end_ip_address      = data.http.ifconfig.body
+# }
 
 resource "azurerm_postgresql_database" "grouper" {
   name                = "grouper"
