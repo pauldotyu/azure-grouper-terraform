@@ -186,7 +186,6 @@ stages:
 - stage: destroy
   displayName: Destroy
   condition: and(ne(variables.namespace, ''), eq(variables.destroy, true))
-  dependsOn: tools
   jobs: 
   - job: do_destroy
     displayName: Destroy?
