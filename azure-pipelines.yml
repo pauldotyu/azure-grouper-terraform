@@ -182,7 +182,7 @@ stages:
         az login --service-principal --username $(client-id) --password $(client-secret) --tenant $(tenant-id)
         az account set -s $(main-subscription-id)
         az aks get-credentials --resource-group $(RG_NAME) --name $(AKS_NAME) --admin
-        kubectl create namespace $(namespace)) --dry-run=client -o yaml | kubectl apply -f -
+        kubectl create namespace $(namespace) --dry-run=client -o yaml | kubectl apply -f -
         kubectl apply -f grouper-secrets-provider.yml -n $(namespace)
         kubectl apply -f grouper-daemon.yml -n $(namespace)
         kubectl apply -f grouper-ws.yml -n $(namespace)
