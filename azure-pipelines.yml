@@ -144,9 +144,16 @@ stages:
         fi
 
         # Enable Azure AD Pod Identity
-        az aks update -g $RG_NAME -n $AKS_NAME --enable-pod-identity
-        POD_IDENTITY_NAME=grouper-pod-identity
-        az aks pod-identity add -g $RG_NAME --cluster-name $AKS_NAME --namespace $(namespace) --name $POD_IDENTITY_NAME --identity-resource-id $(MANAGED_IDENTITY_RESOURCE_ID)
+        pod=$(az aks show -g $RG_NAME -n $AKS_NAME --query podIdentityProfile.enabled)
+        if [ -z "$pod" ] || [ "$pod" == "false" ]
+        then
+              echo "podIdentityProfile being enabling now..."
+              az aks update -g $RG_NAME -n $AKS_NAME --enable-pod-identity
+              POD_IDENTITY_NAME=grouper-pod-identity
+              az aks pod-identity add -g $RG_NAME --cluster-name $AKS_NAME --namespace $(namespace) --name $POD_IDENTITY_NAME --identity-resource-id $(MANAGED_IDENTITY_RESOURCE_ID)
+        else
+              echo "podIdentityProfile already enabled"
+        fi
       displayName: Enable AKS add-ons
       name: enable_aks_features
   - job: kubectl

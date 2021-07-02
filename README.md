@@ -110,12 +110,17 @@ fi
 kubectl get pods -n kube-system -l 'app in (secrets-store-csi-driver, secrets-store-provider-azure)'
 
 # Enable Azure AD Pod Identity
-az aks update -g $RG_NAME -n $AKS_NAME --enable-pod-identity
-
-# Enable managed identity to be used on pods within a particular namespace
-NAMESPACE=default
-POD_IDENTITY_NAME=grouper-pod-identity
-az aks pod-identity add -g $RG_NAME --cluster-name $AKS_NAME --namespace default --name $POD_IDENTITY_NAME --identity-resource-id $IDENTITY_RESOURCE_ID
+pod=$(az aks show -g $RG_NAME -n $AKS_NAME --query podIdentityProfile.enabled)
+if [ -z "$pod" ] || [ "$pod" == "false" ]
+then
+      echo "podIdentityProfile being enabling now..."
+      az aks update -g $RG_NAME -n $AKS_NAME --enable-pod-identity
+      NAMESPACE=default
+      POD_IDENTITY_NAME=grouper-pod-identity
+      az aks pod-identity add -g $RG_NAME --cluster-name $AKS_NAME --namespace default --name $POD_IDENTITY_NAME --identity-resource-id $IDENTITY_RESOURCE_ID
+else
+      echo "podIdentityProfile already enabled"
+fi
 
 # Verify pod identity resource exists
 kubectl get azureidentity
