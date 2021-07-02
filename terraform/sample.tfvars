@@ -9,5 +9,3 @@ cluster_node_count        = 1
 tags = {
   environment = "dev"
 }
-# aks admin groups
-admin_group_object_ids = ["70ea9e17-0efa-4b84-a3c6-c7644068cd51"]

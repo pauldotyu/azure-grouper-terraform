@@ -182,9 +182,12 @@ resource "azurerm_kubernetes_cluster" "grouper" {
   role_based_access_control {
     enabled = true
     azure_active_directory {
-      managed                = true
-      tenant_id              = data.azurerm_client_config.current.tenant_id
-      admin_group_object_ids = var.admin_group_object_ids
+      managed                    = true
+      tenant_id                  = data.azurerm_client_config.current.tenant_id
+
+      admin_group_object_ids = [
+        var.aks_admin_group_object_id
+      ]
     }
   }
 }
@@ -363,17 +366,7 @@ resource "azurerm_key_vault_secret" "username" {
 
 resource "azurerm_key_vault_secret" "password" {
   name         = "password"
-  value        = var.psql_password_encrypted
-  key_vault_id = azurerm_key_vault.grouper.id
-
-  depends_on = [
-    azurerm_key_vault_access_policy.kv_current
-  ]
-}
-
-resource "azurerm_key_vault_secret" "morphstring" {
-  name         = "morphstring"
-  value        = var.grouper_morphstring
+  value        = var.psql_password_grouper_encrypted
   key_vault_id = azurerm_key_vault.grouper.id
 
   depends_on = [

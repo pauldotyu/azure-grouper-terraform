@@ -29,7 +29,7 @@ az login
 PSQL_PASSWORD=<YOUR_PSQL_PASSWORD>
 
 # Navigate to the slashRoot/opt/grouper/grouperWebapp/WEB-INF/classes directory and run this command
-PSQL_PASSWORD_ENCRYPTED=$(java -cp .:grouperClient-2.5.39.jar edu.internet2.middleware.morphString.Encrypt dontMask <<< $PSQL_PASSWORD | sed 's/Type the string to encrypt (note: pasting might echo it back): The encrypted string is: //')
+PSQL_PASSWORD_GROUPER_ENCRYPTED=$(java -cp .:grouperClient-2.5.39.jar edu.internet2.middleware.morphString.Encrypt dontMask <<< $PSQL_PASSWORD | sed 's/Type the string to encrypt (note: pasting might echo it back): The encrypted string is: //')
 ```
 
 ### Terraform
@@ -40,8 +40,8 @@ I have provided sample variable values you can use in the `sample.tfvars` files 
 
 - `psql_login` - This is your login for the PostgreSQL server username
 - `psql_password` - This is your unencrypted PostgreSQL server password
-- `psql_password_encrypted` - This is your Grouper-encrypted version of `psql_password`
-- `admin_group_object_ids` - This is your Azure AD Group Object ID that will be granted "admin" privileges within the cluster
+- `psql_password_grouper_encrypted` - This is your Grouper-encrypted version of `psql_password`
+- `aks_admin_group_object_id` - This is your Azure AD Group Object ID that will be granted "admin" privileges within the cluster
 
 ```sh
 # Navigate to the terraform directory

@@ -37,9 +37,9 @@ variable "cluster_node_count" {
   description = "Cluster node count"
 }
 
-variable "admin_group_object_ids" {
-  type        = list(string)
-  description = "Azure AD Admin Group Object IDs for RBAC"
+variable "aks_admin_group_object_id" {
+  type        = string
+  description = "Azure AD Admin Group Object ID for cluster admin access"
 }
 
 variable "tags" {
@@ -54,6 +54,6 @@ variable "psql_password" {
   type = string
 }
 
-variable "psql_password_encrypted" {
+variable "psql_password_grouper_encrypted" {
   type = string
 }
