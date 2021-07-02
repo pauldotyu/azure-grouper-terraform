@@ -70,7 +70,7 @@ stages:
         export ARM_TENANT_ID=$(tenant-id)
         terraform init
         terraform workspace select $(workspace) || terraform workspace new $(workspace)
-        terraform plan -var-file="configs/$(workspace).tfvars" -var="psql_login=$(psql-user)" -var="psql_password=$(psql-password)" -var="psql_password_grouper_encrypted=$(PSQL_PASSWORD_GROUPER_ENCRYPTED)" -out=$(System.DefaultWorkingDirectory)/$(workspace).tfplan
+        terraform plan -var-file="$(workspace).tfvars" -var="psql_login=$(psql-user)" -var="psql_password=$(psql-password)" -var="psql_password_grouper_encrypted=$(PSQL_PASSWORD_GROUPER_ENCRYPTED)" -out=$(System.DefaultWorkingDirectory)/$(workspace).tfplan
       displayName: Terraform Plan
       name: terraform_plan
     - task: PublishPipelineArtifact@1
