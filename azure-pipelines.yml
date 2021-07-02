@@ -63,6 +63,11 @@ stages:
       displayName: Grouper encrypt passwords
       name: grouper_encrypt
       workingDirectory: slashRoot/opt/grouper/grouperWebapp/WEB-INF/classes
+    - task: DownloadSecureFile@1
+      name: terraformrc
+      displayName: 'Download .terraformrc'
+      inputs:
+        secureFile: '.terraformrc'
     - script: |
         export ARM_CLIENT_ID=$(client-id) 
         export ARM_CLIENT_SECRET=$(client-secret)
