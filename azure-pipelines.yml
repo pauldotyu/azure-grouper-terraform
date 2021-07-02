@@ -3,17 +3,50 @@
 # Add steps that build, run tests, deploy, and more:
 # https://aka.ms/yaml
 
+
 trigger:
 - main
 
 pool:
   vmImage: ubuntu-latest
 
-steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+variables:
+- group: kvdevops1
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+stages:
+- stage: tools
+  condition: ne(variables.workspace, '')
+  displayName: Tools
+  jobs:
+  - job: install_tools
+    displayName: Install Tools
+    steps:
+    - script: |
+        #curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+        az --version
+      displayName: Install Azure CLI
+      name: install_azcli
+    - script: |
+        #curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+        #sudo apt-add-repository "deb [arch=$(dpkg --print-architecture)] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+        #sudo apt install terraform
+        terraform --version
+      displayName: Install Terraform
+      name: install_terraform
+    - script: |
+        docker --version
+      displayName: Install Docker
+      name: install_docker
+    - script: |
+        kubectl version --client
+      displayName: Install kubectl
+      name: install_kubectl
+    - script: |
+        #wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+        #sudo dpkg -i packages-microsoft-prod.deb
+        #sudo apt install apt-transport-https
+        #sudo apt update
+        #sudo apt install msopenjdk-11
+        java --version
+      displayName: Install Java
+      name: install_java
