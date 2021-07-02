@@ -170,6 +170,7 @@ stages:
         sed -i "s/<YOUR_ACR_NAME>/$(ACR_NAME)/; s/<YOUR_CONTAINER_VERSION>/$(CONTAINER_VERSION)/" grouper-ui.yaml
       displayName: Update Kubernetes Manifests
       name: update_manifests
+      workingDirectory: kubernetes
     - script: |
         az login --service-principal --username $(client-id) --password $(client-secret) --tenant $(tenant-id)
         az account set -s $(main-subscription-id)
@@ -188,7 +189,7 @@ stages:
   condition: and(ne(variables.namespace, ''), eq(variables.destroy, true))
   jobs: 
   - job: do_destroy
-    displayName: Destroy?
+    displayName: Destroy
     pool: Server
     steps:
     - task: ManualValidation@0
@@ -215,3 +216,4 @@ stages:
         terraform init
         terraform destroy -var-file="$(namespace).tfvars" -var="psql_login=nothing" -var="psql_password=nothing" -var="psql_password_grouper_encrypted=nothing" -var="aks_admin_group_object_id=nothing" --auto-approve
       displayName: Destroy infrastructure
+      workingDirectory: terraform
