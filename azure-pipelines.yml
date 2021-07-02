@@ -17,7 +17,6 @@ stages:
 - stage: plan
   displayName: Plan
   condition: and(ne(variables.workspace, ''), eq(variables.destroy, false))
-  dependsOn: tools
   jobs: 
   - job: terraform_plan
     displayName: Terraform Plan 
