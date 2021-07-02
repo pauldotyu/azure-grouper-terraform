@@ -182,12 +182,9 @@ resource "azurerm_kubernetes_cluster" "grouper" {
   role_based_access_control {
     enabled = true
     azure_active_directory {
-      managed                    = true
-      tenant_id                  = data.azurerm_client_config.current.tenant_id
-
-      admin_group_object_ids = [
-        var.aks_admin_group_object_id
-      ]
+      managed                = true
+      tenant_id              = data.azurerm_client_config.current.tenant_id
+      admin_group_object_ids = [var.aks_admin_group_object_id]
     }
   }
 }
