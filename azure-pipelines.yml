@@ -17,9 +17,9 @@ stages:
 - stage: plan
   displayName: Plan
   condition: and(ne(variables.namespace, ''), eq(variables.destroy, false))
-  jobs: 
+  jobs:
   - job: terraform_plan
-    displayName: Terraform Plan 
+    displayName: Terraform Plan
     steps:
     - script: |
         echo "##vso[task.setvariable variable=PSQL_PASSWORD_GROUPER_ENCRYPTED;]$(java -cp .:grouperClient-2.5.39.jar edu.internet2.middleware.morphString.Encrypt dontMask <<< $(psql-password) | sed 's/Type the string to encrypt (note: pasting might echo it back): The encrypted string is: //')"
@@ -32,7 +32,7 @@ stages:
       inputs:
         secureFile: '.terraformrc'
     - script: |
-        export ARM_CLIENT_ID=$(client-id) 
+        export ARM_CLIENT_ID=$(client-id)
         export ARM_CLIENT_SECRET=$(client-secret)
         export ARM_SUBSCRIPTION_ID=$(main-subscription-id)
         export ARM_TENANT_ID=$(tenant-id)
@@ -81,7 +81,7 @@ stages:
       displayName: Download $(namespace).tfplan
       name: download_tfplan
     - script: |
-        export ARM_CLIENT_ID=$(client-id) 
+        export ARM_CLIENT_ID=$(client-id)
         export ARM_CLIENT_SECRET=$(client-secret)
         export ARM_SUBSCRIPTION_ID=$(main-subscription-id)
         export ARM_TENANT_ID=$(tenant-id)
@@ -103,19 +103,20 @@ stages:
     dependsOn: apply
     variables:
       CONTAINER_VERSION: '$(Build.BuildId)'
+      RG_NAME: $[ dependencies.apply.outputs['apply.RG_NAME'] ]
       ACR_NAME: $[ dependencies.apply.outputs['apply.ACR_NAME'] ]
     steps:
     - script: |
         sed -i "s~<YOUR_GROUPER_SYSTEM_PASSWORD>~$(grouper-system-password)~ " ./slashRoot/opt/grouper/grouperWebapp/WEB-INF/bin/assignGrouperSystemPassword.gsh; chmod +x ./slashRoot/opt/grouper/grouperWebapp/WEB-INF/bin/assignGrouperSystemPassword.gsh
         az login --service-principal --username $(client-id) --password $(client-secret) --tenant $(tenant-id)
         az account set -s $(main-subscription-id)
-        az acr build --registry $(ACR_NAME) --image grouper:$(CONTAINER_VERSION) .
+        az acr build --registry $(ACR_NAME) --resource-group $(RG_NAME) --image grouper:$(CONTAINER_VERSION) .
       displayName: Container Build
       name: acr_build
   - job: aks_features
     displayName: Enable AKS Features
     condition: eq(dependencies.acr_build.result, 'Succeeded')
-    dependsOn: 
+    dependsOn:
       - apply
       - acr_build
     variables:
@@ -194,7 +195,7 @@ stages:
 - stage: destroy
   displayName: Destroy
   condition: and(ne(variables.namespace, ''), eq(variables.destroy, true))
-  jobs: 
+  jobs:
   - job: do_destroy
     displayName: Destroy
     pool: Server
@@ -208,14 +209,14 @@ stages:
     displayName: Terraform Destroy
     condition: eq(dependencies.do_destroy.result, 'Succeeded')
     dependsOn: do_destroy
-    steps: 
+    steps:
     - task: DownloadSecureFile@1
       name: terraformrc
       displayName: 'Download .terraformrc'
       inputs:
         secureFile: '.terraformrc'
     - script: |
-        export ARM_CLIENT_ID=$(client-id) 
+        export ARM_CLIENT_ID=$(client-id)
         export ARM_CLIENT_SECRET=$(client-secret)
         export ARM_SUBSCRIPTION_ID=$(main-subscription-id)
         export ARM_TENANT_ID=$(tenant-id)
