@@ -23,6 +23,12 @@ With the tools installed, perform the following steps:
 az login
 ```
 
+### Make sure you are running a supported version of Kubernetes
+
+```sh
+az aks get-versions --location westus2 --output table
+```
+
 ### Grouper encoded password
 
 ```sh
