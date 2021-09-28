@@ -123,7 +123,7 @@ resource "azurerm_subnet" "ag" {
 
 resource "azurerm_kubernetes_cluster" "grouper" {
   name                = "aks-${random_pet.grouper.id}"
-  kubernetes_version  = "1.20.7" # az aks get-versions -l westus2 
+  kubernetes_version  = var.kubernetes_version # az aks get-versions -l westus2
   location            = azurerm_resource_group.grouper.location
   resource_group_name = azurerm_resource_group.grouper.name
   dns_prefix          = "grouper-${random_pet.grouper.id}"
@@ -164,7 +164,7 @@ resource "azurerm_kubernetes_cluster" "grouper" {
     ingress_application_gateway {
       enabled = true
       # this does not work - when you create an ingress, nothing gets configured on the app gateway
-      #gateway_id = azurerm_application_gateway.ag.id 
+      #gateway_id = azurerm_application_gateway.ag.id
       # this does work
       subnet_id = azurerm_subnet.ag.id
     }
