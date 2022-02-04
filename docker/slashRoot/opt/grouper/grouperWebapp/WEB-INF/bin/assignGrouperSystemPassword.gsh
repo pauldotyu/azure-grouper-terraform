@@ -1,1 +1,0 @@
-new GrouperPasswordSave().assignApplication(GrouperPassword.Application.UI).assignUsername("GrouperSystem").assignPassword("<YOUR_GROUPER_SYSTEM_PASSWORD>").save();

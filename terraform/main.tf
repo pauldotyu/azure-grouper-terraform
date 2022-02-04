@@ -272,9 +272,17 @@ resource "azurerm_kubernetes_cluster_node_pool" "grouper" {
   name                  = "internal"
   kubernetes_cluster_id = azurerm_kubernetes_cluster.grouper.id
   vm_size               = var.cluster_node_pool_vm_size
-  node_count            = var.cluster_node_count
   vnet_subnet_id        = azurerm_subnet.aks.id
-  tags                  = var.tags
+  availability_zones    = [1, 2, 3]
+  enable_auto_scaling   = true
+  max_count             = 10
+  min_count             = 3
+
+  upgrade_settings {
+    max_surge = 3
+  }
+
+  tags = var.tags
 }
 
 resource "azurerm_container_registry" "grouper" {
@@ -472,6 +480,16 @@ resource "azurerm_role_assignment" "aks_vmc" {
   principal_id         = azurerm_kubernetes_cluster.grouper.kubelet_identity[0].object_id
 }
 
+# Update grouper system password
+resource "local_file" "gsh" {
+  filename = "../docker/slashRoot/opt/grouper/grouperWebapp/WEB-INF/bin/assignGrouperSystemPassword.tmpl"
+  content = templatefile("../docker/slashRoot/opt/grouper/grouperWebapp/WEB-INF/bin/assignGrouperSystemPassword.tmpl",
+    {
+      GROUPER_SYSTEM_PASSWORD = var.grouper_system_password,
+    }
+  )
+}
+
 # Use k8s template files to build deployment specific manifests
 resource "local_file" "secrets" {
   filename = "../kubernetes/grouper-secrets-provider.yaml"
@@ -520,6 +538,7 @@ resource "null_resource" "acr_build" {
   }
 
   depends_on = [
+    local_file.gsh,
     azurerm_container_registry.grouper
   ]
 }
