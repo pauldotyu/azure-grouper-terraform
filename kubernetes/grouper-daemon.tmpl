@@ -17,7 +17,7 @@ spec:
         aadpodidbinding: grouper-pod-identity
     spec:
       containers:
-        - image: <YOUR_ACR_NAME>.azurecr.io/grouper:<YOUR_CONTAINER_VERSION>
+        - image: ${ACR_FQDN}/grouper:latest # NOTE: using latest is not best practice
           name: grouper-daemon
           resources: {}
           imagePullPolicy: IfNotPresent

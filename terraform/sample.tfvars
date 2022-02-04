@@ -7,6 +7,5 @@ default_node_pool_vm_size = "Standard_B2ms"
 cluster_node_pool_vm_size = "Standard_DS2_v2"
 cluster_node_count        = 1
 tags = {
-  environment = "dev"
   repo = "pauldotyu/azure-grouper-terraform"
 }

@@ -2,22 +2,22 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: grouper-ws
-  name: grouper-ws
+    app: grouper-ui
+  name: grouper-ui
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: grouper-ws
+      app: grouper-ui
   strategy: {}
   template:
     metadata:
       labels:
-        app: grouper-ws
+        app: grouper-ui
         aadpodidbinding: grouper-pod-identity
     spec:
       initContainers:
-        - image: <YOUR_ACR_NAME>.azurecr.io/grouper:<YOUR_CONTAINER_VERSION>
+        - image: ${ACR_FQDN}/grouper:latest # NOTE: using latest is not best practice
           name: grouper-init
           resources: {}
           imagePullPolicy: IfNotPresent
@@ -50,21 +50,33 @@ spec:
                   name: grouper-secrets
                   key: password
           volumeMounts:
-          - name: azurekeyvault
-            mountPath: "/mnt/secrets-store"
-            readOnly: true
+            - name: azurekeyvault
+              mountPath: "/mnt/secrets-store"
+              readOnly: true
       containers:
-        - image: <YOUR_ACR_NAME>.azurecr.io/grouper:<YOUR_CONTAINER_VERSION>
-          name: grouper-ws
+        - image: ${ACR_FQDN}/grouper:latest # NOTE: using latest is not best practice
+          name: grouper-ui
           ports:
-            - containerPort: 8443
+            - containerPort: 443
           resources: {}
           imagePullPolicy: IfNotPresent
-          args: ["ws"]
+          args: ["ui"]
           env:
             - name: GROUPER_SELF_SIGNED_CERT
               value: "true"
-            - name: GROUPER_WS_GROUPER_AUTH
+            - name: GROUPER_RUN_SHIB_SP
+              value: "false"
+            - name: GROUPER_AUTO_DDL_UPTOVERSION
+              value: "v2.5.*"
+            # - name: GROUPER_UI_CONFIGURATION_EDITOR_SOURCEIPADDRESSES
+            #   value: "0.0.0.0/0"
+            - name: GROUPER_UI_GROUPER_AUTH
+              value: "true"
+            - name: GROUPERSYSTEM_QUICKSTART_PASS
+              value: "!pass!"
+            - name: GROUPER_LOG_TO_HOST
+              value: "true"
+            - name: GROUPER_DAEMON
               value: "true"
             - name: GROUPER_DATABASE_URL
               valueFrom:
@@ -82,9 +94,9 @@ spec:
                   name: grouper-secrets
                   key: password
           volumeMounts:
-          - name: azurekeyvault
-            mountPath: "/mnt/secrets-store"
-            readOnly: true
+            - name: azurekeyvault
+              mountPath: "/mnt/secrets-store"
+              readOnly: true
       volumes:
         - name: azurekeyvault
           csi:
@@ -92,20 +104,20 @@ spec:
             readOnly: true
             volumeAttributes:
               secretProviderClass: grouper-secrets-provider # this is the name of your SecretProviderClass
-            
 status: {}
 ---
 apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: grouper-ws
-  name: grouper-ws
+    app: grouper-ui
+  name: grouper-ui
 spec:
   ports:
-    - port: 8443
+    - port: 443
       protocol: TCP
-      targetPort: 8443
-      name: grouper-ws
+      targetPort: 443
+      name: grouper-ui
   selector:
-    app: grouper-ws
+    app: grouper-ui
+  type: LoadBalancer
