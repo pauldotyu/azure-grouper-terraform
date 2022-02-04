@@ -482,7 +482,7 @@ resource "azurerm_role_assignment" "aks_vmc" {
 
 # Update grouper system password
 resource "local_file" "gsh" {
-  filename = "../docker/slashRoot/opt/grouper/grouperWebapp/WEB-INF/bin/assignGrouperSystemPassword.tmpl"
+  filename = "../docker/slashRoot/opt/grouper/grouperWebapp/WEB-INF/bin/assignGrouperSystemPassword.gsh"
   content = templatefile("../docker/slashRoot/opt/grouper/grouperWebapp/WEB-INF/bin/assignGrouperSystemPassword.tmpl",
     {
       GROUPER_SYSTEM_PASSWORD = var.grouper_system_password,
