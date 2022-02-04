@@ -35,5 +35,5 @@ override.tf.json
 terraform.rc
 
 
-*kubernetes/*.yaml
-*docker/*.gsh
+kubernetes/*.yaml
+docker/slashRoot/opt/grouper/grouperWebapp/WEB-INF/bin/assignGrouperSystemPassword.gsh
