@@ -33,7 +33,7 @@ stages:
           - script: |
               export ARM_CLIENT_ID=$(client-id)
               export ARM_CLIENT_SECRET=$(client-secret)
-              export ARM_SUBSCRIPTION_ID=$(devops-subscription-id)
+              export ARM_SUBSCRIPTION_ID=$(SUBSCRIPTIONID)
               export ARM_TENANT_ID=$(tenant-id)
               export TF_CLI_CONFIG_FILE="$(terraformrc.secureFilePath)"
               terraform init
@@ -82,7 +82,7 @@ stages:
           - script: |
               export ARM_CLIENT_ID=$(client-id)
               export ARM_CLIENT_SECRET=$(client-secret)
-              export ARM_SUBSCRIPTION_ID=$(devops-subscription-id)
+              export ARM_SUBSCRIPTION_ID=$(SUBSCRIPTIONID)
               export ARM_TENANT_ID=$(tenant-id)
               export TF_CLI_CONFIG_FILE="$(terraformrc.secureFilePath)"
               terraform init
@@ -108,7 +108,7 @@ stages:
       #     - script: |
       #         sed -i "s~<YOUR_GROUPER_SYSTEM_PASSWORD>~$(grouper-system-password)~ " ./slashRoot/opt/grouper/grouperWebapp/WEB-INF/bin/assignGrouperSystemPassword.gsh; chmod +x ./slashRoot/opt/grouper/grouperWebapp/WEB-INF/bin/assignGrouperSystemPassword.gsh
       #         az login --service-principal --username $(client-id) --password $(client-secret) --tenant $(tenant-id)
-      #         az account set -s $(devops-subscription-id)
+      #         az account set -s $(SUBSCRIPTIONID)
       #         az acr build --registry $(ACR_NAME) --resource-group $(RG_NAME) --image grouper:$(CONTAINER_VERSION) .
       #       displayName: Container Build
       #       name: acr_build
@@ -125,7 +125,7 @@ stages:
       #   steps:
       #     - script: |
       #         az login --service-principal --username $(client-id) --password $(client-secret) --tenant $(tenant-id)
-      #         az account set -s $(devops-subscription-id)
+      #         az account set -s $(SUBSCRIPTIONID)
       #         az aks get-credentials -n $(AKS_NAME) -g $(RG_NAME) --admin
       #         az provider register --namespace Microsoft.ContainerService
       #         az feature register --name EnablePodIdentityPreview --namespace Microsoft.ContainerService
@@ -156,41 +156,41 @@ stages:
       #         fi
       #       displayName: Enable AKS add-ons
       #       name: enable_aks_features
-      - job: kubectl
-        displayName: Apply Kubernetes Manifests
-        condition: and(eq(dependencies.apply.result, 'Succeeded'), eq(dependencies.aks_features.result, 'Succeeded'))
-        dependsOn:
-          - apply
-          # - aks_features
-        variables:
-          CONTAINER_VERSION: "$(Build.BuildId)"
-          # RG_NAME: $[ dependencies.apply.outputs['apply.RG_NAME'] ]
-          # ACR_NAME: $[ dependencies.apply.outputs['apply.ACR_NAME'] ]
-          # AKS_NAME: $[ dependencies.apply.outputs['apply.AKS_NAME'] ]
-          # AKV_NAME: $[ dependencies.apply.outputs['apply.AKV_NAME'] ]
-          # MANAGED_IDENTITY_CLIENT_ID: $[ dependencies.apply.outputs['apply.MANAGED_IDENTITY_CLIENT_ID'] ]
-        steps:
-          # - script: |
-          #     sed -i "s/<YOUR_KV_NAME>/$(AKV_NAME)/; s/<YOUR_KV_TENANT_ID>/$(tenant-id)/" grouper-secrets-provider.yml
-          #     sed -i "s/<YOUR_ACR_NAME>/$(ACR_NAME)/; s/<YOUR_CONTAINER_VERSION>/$(CONTAINER_VERSION)/" grouper-daemon.yml
-          #     sed -i "s/<YOUR_ACR_NAME>/$(ACR_NAME)/; s/<YOUR_CONTAINER_VERSION>/$(CONTAINER_VERSION)/" grouper-ws.yml
-          #     sed -i "s/<YOUR_ACR_NAME>/$(ACR_NAME)/; s/<YOUR_CONTAINER_VERSION>/$(CONTAINER_VERSION)/" grouper-ui.yml
-          #   displayName: Update Kubernetes Manifests
-          #   name: update_manifests
-          #   workingDirectory: kubernetes
-          - script: |
-              az login --service-principal --username $(client-id) --password $(client-secret) --tenant $(tenant-id)
-              az account set -s $(devops-subscription-id)
-              az aks get-credentials --resource-group $(RG_NAME) --name $(AKS_NAME) --admin
-              kubectl create namespace $(namespace) --dry-run=client -o yaml | kubectl apply -f -
-              kubectl apply -f grouper-secrets-provider.yaml -n $(namespace)
-              kubectl apply -f grouper-daemon.yaml -n $(namespace)
-              kubectl apply -f grouper-ws.yaml -n $(namespace)
-              kubectl apply -f grouper-ui.yaml -n $(namespace)
-              kubectl get all -n $(namespace)
-            displayName: Apply Kubernetes Manifests
-            name: kubectl_apply
-            workingDirectory: kubernetes
+      # - job: kubectl
+      #   displayName: Apply Kubernetes Manifests
+      #   condition: and(eq(dependencies.apply.result, 'Succeeded'), eq(dependencies.aks_features.result, 'Succeeded'))
+      #   dependsOn:
+      #     - apply
+      #     # - aks_features
+      #   variables:
+      #     CONTAINER_VERSION: "$(Build.BuildId)"
+      #     # RG_NAME: $[ dependencies.apply.outputs['apply.RG_NAME'] ]
+      #     # ACR_NAME: $[ dependencies.apply.outputs['apply.ACR_NAME'] ]
+      #     # AKS_NAME: $[ dependencies.apply.outputs['apply.AKS_NAME'] ]
+      #     # AKV_NAME: $[ dependencies.apply.outputs['apply.AKV_NAME'] ]
+      #     # MANAGED_IDENTITY_CLIENT_ID: $[ dependencies.apply.outputs['apply.MANAGED_IDENTITY_CLIENT_ID'] ]
+      #   steps:
+      #     # - script: |
+      #     #     sed -i "s/<YOUR_KV_NAME>/$(AKV_NAME)/; s/<YOUR_KV_TENANT_ID>/$(tenant-id)/" grouper-secrets-provider.yml
+      #     #     sed -i "s/<YOUR_ACR_NAME>/$(ACR_NAME)/; s/<YOUR_CONTAINER_VERSION>/$(CONTAINER_VERSION)/" grouper-daemon.yml
+      #     #     sed -i "s/<YOUR_ACR_NAME>/$(ACR_NAME)/; s/<YOUR_CONTAINER_VERSION>/$(CONTAINER_VERSION)/" grouper-ws.yml
+      #     #     sed -i "s/<YOUR_ACR_NAME>/$(ACR_NAME)/; s/<YOUR_CONTAINER_VERSION>/$(CONTAINER_VERSION)/" grouper-ui.yml
+      #     #   displayName: Update Kubernetes Manifests
+      #     #   name: update_manifests
+      #     #   workingDirectory: kubernetes
+      #     - script: |
+      #         az login --service-principal --username $(client-id) --password $(client-secret) --tenant $(tenant-id)
+      #         az account set -s $(SUBSCRIPTIONID)
+      #         az aks get-credentials --resource-group $(RG_NAME) --name $(AKS_NAME) --admin
+      #         kubectl create namespace $(namespace) --dry-run=client -o yaml | kubectl apply -f -
+      #         kubectl apply -f grouper-secrets-provider.yaml -n $(namespace)
+      #         kubectl apply -f grouper-daemon.yaml -n $(namespace)
+      #         kubectl apply -f grouper-ws.yaml -n $(namespace)
+      #         kubectl apply -f grouper-ui.yaml -n $(namespace)
+      #         kubectl get all -n $(namespace)
+      #       displayName: Apply Kubernetes Manifests
+      #       name: kubectl_apply
+      #       workingDirectory: kubernetes
   - stage: destroy
     displayName: Destroy
     condition: and(ne(variables.namespace, ''), eq(variables.destroy, true))
@@ -217,7 +217,7 @@ stages:
           - script: |
               export ARM_CLIENT_ID=$(client-id)
               export ARM_CLIENT_SECRET=$(client-secret)
-              export ARM_SUBSCRIPTION_ID=$(devops-subscription-id)
+              export ARM_SUBSCRIPTION_ID=$(SUBSCRIPTIONID)
               export ARM_TENANT_ID=$(tenant-id)
               export TF_CLI_CONFIG_FILE="$(terraformrc.secureFilePath)"
               terraform init
