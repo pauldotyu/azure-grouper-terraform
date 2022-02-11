@@ -104,6 +104,9 @@ stages:
               # echo "##vso[task.setvariable variable=MANAGED_IDENTITY_CLIENT_ID;isOutput=true]$(terraform output -raw aks_managed_identity_client_id)"
               # echo "##vso[task.setvariable variable=MANAGED_IDENTITY_RESOURCE_ID;isOutput=true]$(terraform output -raw aks_managed_identity_resource_id)"
 
+              az login --service-principal --username $(client-id) --password $(client-secret) --tenant $(tenant-id)
+              az account set -s $(SUBSCRIPTIONID)
+
               # ACR task to build the container
               az acr build -t grouper:latest -r $(terraform output -raw acr_login_server) ../docker
 
