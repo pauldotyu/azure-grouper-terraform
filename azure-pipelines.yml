@@ -118,6 +118,8 @@ stages:
             displayName: Terraform Apply
             name: apply
             workingDirectory: terraform
+          - publish: $(System.DefaultWorkingDirectory)/kubernetes
+            artifact: drop
       - job: kubectl
         displayName: Apply Kubernetes Manifests
         condition: eq(dependencies.apply.result, 'Succeeded')
@@ -128,6 +130,10 @@ stages:
           RG_NAME: $[ dependencies.apply.outputs['apply.RG_NAME'] ]
           AKS_NAME: $[ dependencies.apply.outputs['apply.AKS_NAME'] ]
         steps:
+          - download: current
+            artifact: drop
+            patterns: |
+              **/*.yaml
           - script: |
               az login --service-principal --username $(client-id) --password $(client-secret) --tenant $(tenant-id)
               az account set -s $(SUBSCRIPTIONID)
@@ -140,7 +146,6 @@ stages:
               kubectl get all -n $(namespace)
             displayName: Apply Kubernetes Manifests
             name: kubectl_apply
-            workingDirectory: kubernetes
   - stage: destroy
     displayName: Destroy
     condition: and(ne(variables.namespace, ''), eq(variables.destroy, true))
