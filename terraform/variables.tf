@@ -1,3 +1,7 @@
+variable "email" {
+  type = string
+}
+
 variable "location" {
   type = string
 }

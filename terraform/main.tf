@@ -528,6 +528,25 @@ resource "local_file" "ws" {
   )
 }
 
+resource "local_file" "cert" {
+  filename = "../kubernetes/certificate-issuer.yaml"
+  content = templatefile("../kubernetes/certificate-issuer.tmpl",
+    {
+      EMAIL = var.email,
+    }
+  )
+}
+
+resource "local_file" "ingress" {
+  filename = "../kubernetes/grouper-ingress.yaml"
+  content = templatefile("../kubernetes/grouper-ingress.tmpl",
+    {
+      RESOURCE_NAME = local.resource_name,
+      LOCATION      = var.location,
+    }
+  )
+}
+
 resource "null_resource" "acr_build" {
   triggers = {
     always_run = "${timestamp()}"
@@ -560,3 +579,17 @@ resource "null_resource" "acr_build" {
 #     azurerm_kubernetes_cluster.grouper
 #   ]
 # }
+
+# This will be temporary until pod-identity goes GA and added via AKS addon
+resource "null_resource" "pod_identity" {
+  provisioner "local-exec" {
+    command = <<-EOT
+      az provider register --namespace Microsoft.ContainerService
+      az feature register --name EnablePodIdentityPreview --namespace Microsoft.ContainerService
+      az extension add --name aks-preview
+      az extension update --name aks-preview
+      az aks update -g ${azurerm_resource_group.grouper.name} -n ${azurerm_kubernetes_cluster.grouper.name} --enable-pod-identity;
+      az aks pod-identity add -g ${azurerm_resource_group.grouper.name} --cluster-name ${azurerm_kubernetes_cluster.grouper.name} --namespace grouper --name grouper-pod-identity --identity-resource-id ${azurerm_kubernetes_cluster.grouper.kubelet_identity[0].user_assigned_identity_id};
+    EOT
+  }
+}

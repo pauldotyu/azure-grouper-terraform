@@ -3,7 +3,7 @@ terraform {
     organization = "pauldotyu"
 
     workspaces {
-      name = "azure-grouper"
+      name = "azure-grouper" # runs locally
     }
   }
 }
