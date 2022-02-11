@@ -121,101 +121,29 @@ stages:
             displayName: Terraform Apply
             name: apply
             workingDirectory: terraform
-      # - job: acr_build
-      #   displayName: ACR Build
-      #   condition: eq(dependencies.apply.result, 'Succeeded')
-      #   dependsOn: apply
-      #   variables:
-      #     CONTAINER_VERSION: "$(Build.BuildId)"
-      #     RG_NAME: $[ dependencies.apply.outputs['apply.RG_NAME'] ]
-      #     ACR_NAME: $[ dependencies.apply.outputs['apply.ACR_NAME'] ]
-      #   steps:
-      #     - script: |
-      #         #sed -i "s~<YOUR_GROUPER_SYSTEM_PASSWORD>~$(grouper-system-password)~ " ./slashRoot/opt/grouper/grouperWebapp/WEB-INF/bin/assignGrouperSystemPassword.gsh; chmod +x ./slashRoot/opt/grouper/grouperWebapp/WEB-INF/bin/assignGrouperSystemPassword.gsh
-      #         az login --service-principal --username $(client-id) --password $(client-secret) --tenant $(tenant-id)
-      #         az account set -s $(SUBSCRIPTIONID)
-      #         az acr build --registry $(ACR_NAME) --resource-group $(RG_NAME) --image grouper:latest ./docker
-      #       displayName: Container Build
-      #       name: acr_build
-      # - job: aks_features
-      #   displayName: Enable AKS Features
-      #   condition: eq(dependencies.acr_build.result, 'Succeeded')
-      #   dependsOn:
-      #     - apply
-      #     # - acr_build
-      #   variables:
-      #     RG_NAME: $[ dependencies.apply.outputs['apply.RG_NAME'] ]
-      #     AKS_NAME: $[ dependencies.apply.outputs['apply.AKS_NAME'] ]
-      #     MANAGED_IDENTITY_RESOURCE_ID: $[ dependencies.apply.outputs['apply.MANAGED_IDENTITY_RESOURCE_ID'] ]
-      #   steps:
-      #     - script: |
-      #         az login --service-principal --username $(client-id) --password $(client-secret) --tenant $(tenant-id)
-      #         az account set -s $(SUBSCRIPTIONID)
-      #         az aks get-credentials -n $(AKS_NAME) -g $(RG_NAME) --admin
-      #         az provider register --namespace Microsoft.ContainerService
-      #         az feature register --name EnablePodIdentityPreview --namespace Microsoft.ContainerService
-      #         az feature register --name AKS-AzureKeyVaultSecretsProvider --namespace Microsoft.ContainerService
-      #         az extension add --name aks-preview
-      #         az extension update --name aks-preview
-
-      #         # Enable Azure Key Vault provider for Secrets Store CSI driver (CSI driver)
-      #         csi=$(az aks show -g $RG_NAME -n $AKS_NAME --query addonProfiles.azureKeyvaultSecretsProvider.enabled)
-      #         if [ -z "$csi" ] || [ "$csi" == "false" ]
-      #         then
-      #               echo "addonProfiles.azureKeyvaultSecretsProvider being enabling now..."
-      #               az aks enable-addons -g $RG_NAME -n $AKS_NAME -a azure-keyvault-secrets-provider
-      #         else
-      #               echo "addonProfiles.azureKeyvaultSecretsProvider already enabled"
-      #         fi
-
-      #         # Enable Azure AD Pod Identity
-      #         pod=$(az aks show -g $RG_NAME -n $AKS_NAME --query podIdentityProfile.enabled)
-      #         if [ -z "$pod" ] || [ "$pod" == "false" ]
-      #         then
-      #               echo "podIdentityProfile being enabling now..."
-      #               az aks update -g $RG_NAME -n $AKS_NAME --enable-pod-identity
-      #               POD_IDENTITY_NAME=grouper-pod-identity
-      #               az aks pod-identity add -g $RG_NAME --cluster-name $AKS_NAME --namespace $(namespace) --name $POD_IDENTITY_NAME --identity-resource-id $(MANAGED_IDENTITY_RESOURCE_ID)
-      #         else
-      #               echo "podIdentityProfile already enabled"
-      #         fi
-      #       displayName: Enable AKS add-ons
-      #       name: enable_aks_features
-      # - job: kubectl
-      #   displayName: Apply Kubernetes Manifests
-      #   condition: and(eq(dependencies.apply.result, 'Succeeded'), eq(dependencies.aks_features.result, 'Succeeded'))
-      #   dependsOn:
-      #     - apply
-      #     # - aks_features
-      #   variables:
-      #     CONTAINER_VERSION: "$(Build.BuildId)"
-      #     # RG_NAME: $[ dependencies.apply.outputs['apply.RG_NAME'] ]
-      #     # ACR_NAME: $[ dependencies.apply.outputs['apply.ACR_NAME'] ]
-      #     # AKS_NAME: $[ dependencies.apply.outputs['apply.AKS_NAME'] ]
-      #     # AKV_NAME: $[ dependencies.apply.outputs['apply.AKV_NAME'] ]
-      #     # MANAGED_IDENTITY_CLIENT_ID: $[ dependencies.apply.outputs['apply.MANAGED_IDENTITY_CLIENT_ID'] ]
-      #   steps:
-      #     # - script: |
-      #     #     sed -i "s/<YOUR_KV_NAME>/$(AKV_NAME)/; s/<YOUR_KV_TENANT_ID>/$(tenant-id)/" grouper-secrets-provider.yml
-      #     #     sed -i "s/<YOUR_ACR_NAME>/$(ACR_NAME)/; s/<YOUR_CONTAINER_VERSION>/$(CONTAINER_VERSION)/" grouper-daemon.yml
-      #     #     sed -i "s/<YOUR_ACR_NAME>/$(ACR_NAME)/; s/<YOUR_CONTAINER_VERSION>/$(CONTAINER_VERSION)/" grouper-ws.yml
-      #     #     sed -i "s/<YOUR_ACR_NAME>/$(ACR_NAME)/; s/<YOUR_CONTAINER_VERSION>/$(CONTAINER_VERSION)/" grouper-ui.yml
-      #     #   displayName: Update Kubernetes Manifests
-      #     #   name: update_manifests
-      #     #   workingDirectory: kubernetes
-      #     - script: |
-      #         az login --service-principal --username $(client-id) --password $(client-secret) --tenant $(tenant-id)
-      #         az account set -s $(SUBSCRIPTIONID)
-      #         az aks get-credentials --resource-group $(RG_NAME) --name $(AKS_NAME) --admin
-      #         kubectl create namespace $(namespace) --dry-run=client -o yaml | kubectl apply -f -
-      #         kubectl apply -f grouper-secrets-provider.yaml -n $(namespace)
-      #         kubectl apply -f grouper-daemon.yaml -n $(namespace)
-      #         kubectl apply -f grouper-ws.yaml -n $(namespace)
-      #         kubectl apply -f grouper-ui.yaml -n $(namespace)
-      #         kubectl get all -n $(namespace)
-      #       displayName: Apply Kubernetes Manifests
-      #       name: kubectl_apply
-      #       workingDirectory: kubernetes
+      - job: kubectl
+        displayName: Apply Kubernetes Manifests
+        condition: eq(dependencies.apply.result, 'Succeeded')
+        dependsOn:
+          - apply
+        variables:
+          CONTAINER_VERSION: "$(Build.BuildId)"
+          RG_NAME: $[ dependencies.apply.outputs['apply.RG_NAME'] ]
+          AKS_NAME: $[ dependencies.apply.outputs['apply.AKS_NAME'] ]
+        steps:
+          - script: |
+              az login --service-principal --username $(client-id) --password $(client-secret) --tenant $(tenant-id)
+              az account set -s $(SUBSCRIPTIONID)
+              az aks get-credentials --resource-group $(RG_NAME) --name $(AKS_NAME) --admin
+              kubectl create namespace $(namespace) --dry-run=client -o yaml | kubectl apply -f -
+              kubectl apply -f grouper-secrets-provider.yaml -n $(namespace)
+              kubectl apply -f grouper-daemon.yaml -n $(namespace)
+              kubectl apply -f grouper-ws.yaml -n $(namespace)
+              kubectl apply -f grouper-ui.yaml -n $(namespace)
+              kubectl get all -n $(namespace)
+            displayName: Apply Kubernetes Manifests
+            name: kubectl_apply
+            workingDirectory: kubernetes
   - stage: destroy
     displayName: Destroy
     condition: and(ne(variables.namespace, ''), eq(variables.destroy, true))
