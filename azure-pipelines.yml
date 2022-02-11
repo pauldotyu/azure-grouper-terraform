@@ -118,7 +118,13 @@ stages:
             displayName: Terraform Apply
             name: apply
             workingDirectory: terraform
-          - publish: $(System.DefaultWorkingDirectory)/kubernetes
+          - task: CopyFiles@2
+            displayName: "Copy manifests"
+            inputs:
+              contents: "kubernetes/*.yaml"
+              targetFolder: "$(Build.ArtifactStagingDirectory)"
+          - publish: $(System.DefaultWorkingDirectory)/manifests
+            displayName: Publish manifests
             artifact: drop
       - job: kubectl
         displayName: Apply Kubernetes Manifests
@@ -131,9 +137,8 @@ stages:
           AKS_NAME: $[ dependencies.apply.outputs['apply.AKS_NAME'] ]
         steps:
           - download: current
+            displayName: Download current manifests
             artifact: drop
-            patterns: |
-              **/*.yaml
           - script: |
               az login --service-principal --username $(client-id) --password $(client-secret) --tenant $(tenant-id)
               az account set -s $(SUBSCRIPTIONID)
