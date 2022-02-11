@@ -103,6 +103,18 @@ stages:
               # echo "##vso[task.setvariable variable=AKV_NAME;isOutput=true]$(terraform output -raw akv_name)"
               # echo "##vso[task.setvariable variable=MANAGED_IDENTITY_CLIENT_ID;isOutput=true]$(terraform output -raw aks_managed_identity_client_id)"
               # echo "##vso[task.setvariable variable=MANAGED_IDENTITY_RESOURCE_ID;isOutput=true]$(terraform output -raw aks_managed_identity_resource_id)"
+
+              # ACR task to build the container
+              az acr build -t grouper:latest -r $(terraform output -raw acr_login_server) ../docker
+
+              # AKS Pod Identity enablement
+              # This will be temporary until pod-identity goes GA and added via AKS addon
+              az provider register --namespace Microsoft.ContainerService
+              az feature register --name EnablePodIdentityPreview --namespace Microsoft.ContainerService
+              az extension add --name aks-preview
+              az extension update --name aks-preview
+              az aks update -g $(terraform output -raw rg_name) -n $(terraform output -raw aks_name) --enable-pod-identity
+              az aks pod-identity add -g$(terraform output -raw rg_name) --cluster-name $(terraform output -raw aks_name) --namespace grouper --name grouper-pod-identity --identity-resource-id $(terraform output -raw aks_managed_identity_resource_id)
             displayName: Terraform Apply
             name: apply
             workingDirectory: terraform
@@ -116,10 +128,10 @@ stages:
       #     ACR_NAME: $[ dependencies.apply.outputs['apply.ACR_NAME'] ]
       #   steps:
       #     - script: |
-      #         sed -i "s~<YOUR_GROUPER_SYSTEM_PASSWORD>~$(grouper-system-password)~ " ./slashRoot/opt/grouper/grouperWebapp/WEB-INF/bin/assignGrouperSystemPassword.gsh; chmod +x ./slashRoot/opt/grouper/grouperWebapp/WEB-INF/bin/assignGrouperSystemPassword.gsh
+      #         #sed -i "s~<YOUR_GROUPER_SYSTEM_PASSWORD>~$(grouper-system-password)~ " ./slashRoot/opt/grouper/grouperWebapp/WEB-INF/bin/assignGrouperSystemPassword.gsh; chmod +x ./slashRoot/opt/grouper/grouperWebapp/WEB-INF/bin/assignGrouperSystemPassword.gsh
       #         az login --service-principal --username $(client-id) --password $(client-secret) --tenant $(tenant-id)
       #         az account set -s $(SUBSCRIPTIONID)
-      #         az acr build --registry $(ACR_NAME) --resource-group $(RG_NAME) --image grouper:$(CONTAINER_VERSION) .
+      #         az acr build --registry $(ACR_NAME) --resource-group $(RG_NAME) --image grouper:latest ./docker
       #       displayName: Container Build
       #       name: acr_build
       # - job: aks_features

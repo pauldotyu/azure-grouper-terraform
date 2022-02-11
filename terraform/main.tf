@@ -547,20 +547,20 @@ resource "local_file" "ingress" {
   )
 }
 
-resource "null_resource" "acr_build" {
-  triggers = {
-    always_run = "${timestamp()}"
-  }
+# resource "null_resource" "acr_build" {
+#   triggers = {
+#     always_run = "${timestamp()}"
+#   }
 
-  provisioner "local-exec" {
-    command = "az acr build -t grouper:latest -r ${azurerm_container_registry.grouper.login_server} --no-wait ../docker"
-  }
+#   provisioner "local-exec" {
+#     command = "az acr build -t grouper:latest -r ${azurerm_container_registry.grouper.login_server} --no-wait ../docker"
+#   }
 
-  depends_on = [
-    local_file.gsh,
-    azurerm_container_registry.grouper
-  ]
-}
+#   depends_on = [
+#     local_file.gsh,
+#     azurerm_container_registry.grouper
+#   ]
+# }
 
 # # This should be temporary until pod-identity goes GA and added via AKS addon
 # resource "null_resource" "pod_identity" {
@@ -580,16 +580,16 @@ resource "null_resource" "acr_build" {
 #   ]
 # }
 
-# This will be temporary until pod-identity goes GA and added via AKS addon
-resource "null_resource" "pod_identity" {
-  provisioner "local-exec" {
-    command = <<-EOT
-      az provider register --namespace Microsoft.ContainerService
-      az feature register --name EnablePodIdentityPreview --namespace Microsoft.ContainerService
-      az extension add --name aks-preview
-      az extension update --name aks-preview
-      az aks update -g ${azurerm_resource_group.grouper.name} -n ${azurerm_kubernetes_cluster.grouper.name} --enable-pod-identity;
-      az aks pod-identity add -g ${azurerm_resource_group.grouper.name} --cluster-name ${azurerm_kubernetes_cluster.grouper.name} --namespace grouper --name grouper-pod-identity --identity-resource-id ${azurerm_kubernetes_cluster.grouper.kubelet_identity[0].user_assigned_identity_id};
-    EOT
-  }
-}
+# # This will be temporary until pod-identity goes GA and added via AKS addon
+# resource "null_resource" "pod_identity" {
+#   provisioner "local-exec" {
+#     command = <<-EOT
+#       az provider register --namespace Microsoft.ContainerService
+#       az feature register --name EnablePodIdentityPreview --namespace Microsoft.ContainerService
+#       az extension add --name aks-preview
+#       az extension update --name aks-preview
+#       az aks update -g ${azurerm_resource_group.grouper.name} -n ${azurerm_kubernetes_cluster.grouper.name} --enable-pod-identity;
+#       az aks pod-identity add -g ${azurerm_resource_group.grouper.name} --cluster-name ${azurerm_kubernetes_cluster.grouper.name} --namespace grouper --name grouper-pod-identity --identity-resource-id ${azurerm_kubernetes_cluster.grouper.kubelet_identity[0].user_assigned_identity_id};
+#     EOT
+#   }
+# }
