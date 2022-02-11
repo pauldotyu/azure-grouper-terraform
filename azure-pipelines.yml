@@ -122,42 +122,17 @@ stages:
               else
                 echo "podIdentityProfile already enabled"
               fi
+
+              # Apply Kubernetes manifests
+              kubectl create namespace $(namespace) --dry-run=client -o yaml | kubectl apply -f -
+              kubectl apply -f ../kubernetes/grouper-secrets-provider.yaml -n $(namespace)
+              kubectl apply -f ../kubernetes/grouper-daemon.yaml -n $(namespace)
+              kubectl apply -f ../kubernetes/grouper-ws.yaml -n $(namespace)
+              kubectl apply -f ../kubernetes/grouper-ui.yaml -n $(namespace)
+              kubectl get all -n $(namespace)
             displayName: Terraform Apply
             name: apply
             workingDirectory: terraform
-          - task: CopyFiles@2
-            displayName: "Copy manifests"
-            inputs:
-              contents: "./kubernetes/*.yaml"
-              targetFolder: $(Build.ArtifactStagingDirectory)
-          - publish: $(System.DefaultWorkingDirectory)
-            displayName: Publish manifests
-            artifact: drop
-      - job: kubectl
-        displayName: Apply Kubernetes Manifests
-        condition: eq(dependencies.apply.result, 'Succeeded')
-        dependsOn:
-          - apply
-        variables:
-          CONTAINER_VERSION: "$(Build.BuildId)"
-          RG_NAME: $[ dependencies.apply.outputs['apply.RG_NAME'] ]
-          AKS_NAME: $[ dependencies.apply.outputs['apply.AKS_NAME'] ]
-        steps:
-          - download: current
-            displayName: Download current manifests
-            artifact: drop
-          - script: |
-              az login --service-principal --username $(client-id) --password $(client-secret) --tenant $(tenant-id)
-              az account set -s $(SUBSCRIPTIONID)
-              az aks get-credentials --resource-group $(RG_NAME) --name $(AKS_NAME) --admin
-              kubectl create namespace $(namespace) --dry-run=client -o yaml | kubectl apply -f -
-              kubectl apply -f grouper-secrets-provider.yaml -n $(namespace)
-              kubectl apply -f grouper-daemon.yaml -n $(namespace)
-              kubectl apply -f grouper-ws.yaml -n $(namespace)
-              kubectl apply -f grouper-ui.yaml -n $(namespace)
-              kubectl get all -n $(namespace)
-            displayName: Apply Kubernetes Manifests
-            name: kubectl_apply
   - stage: destroy
     displayName: Destroy
     condition: and(ne(variables.namespace, ''), eq(variables.destroy, true))
