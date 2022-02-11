@@ -107,23 +107,30 @@ stages:
               # ACR task to build the container
               az acr build -t grouper:latest -r $(terraform output -raw acr_login_server) ../docker
 
-              # AKS Pod Identity enablement
+              # Enable Azure AD Pod Identity
               # This will be temporary until pod-identity goes GA and added via AKS addon
               az provider register --namespace Microsoft.ContainerService
               az feature register --name EnablePodIdentityPreview --namespace Microsoft.ContainerService
               az extension add --name aks-preview
               az extension update --name aks-preview
-              az aks update -g $(terraform output -raw rg_name) -n $(terraform output -raw aks_name) --enable-pod-identity
-              az aks pod-identity add -g$(terraform output -raw rg_name) --cluster-name $(terraform output -raw aks_name) --namespace grouper --name grouper-pod-identity --identity-resource-id $(terraform output -raw aks_managed_identity_resource_id)
+              pod=$(az aks show -g $(terraform output -raw rg_name) -n $(terraform output -raw aks_name) --query podIdentityProfile.enabled)
+              if [ -z "$pod" ] || [ "$pod" == "false" ]
+              then
+                echo "podIdentityProfile being enabling now..."
+                az aks update -g $(terraform output -raw rg_name) -n $(terraform output -raw aks_name) --enable-pod-identity
+                az aks pod-identity add -g $(terraform output -raw rg_name) --cluster-name $(terraform output -raw aks_name) --namespace grouper --name grouper-pod-identity --identity-resource-id $(terraform output -raw aks_managed_identity_resource_id)
+              else
+                echo "podIdentityProfile already enabled"
+              fi
             displayName: Terraform Apply
             name: apply
             workingDirectory: terraform
           - task: CopyFiles@2
             displayName: "Copy manifests"
             inputs:
-              contents: "kubernetes/*.yaml"
-              targetFolder: "$(Build.ArtifactStagingDirectory)"
-          - publish: $(System.DefaultWorkingDirectory)/manifests
+              contents: "./kubernetes/*.yaml"
+              targetFolder: $(Build.ArtifactStagingDirectory)
+          - publish: $(System.DefaultWorkingDirectory)
             displayName: Publish manifests
             artifact: drop
       - job: kubectl
