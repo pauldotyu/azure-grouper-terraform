@@ -42,7 +42,7 @@ stages:
               export ARM_TENANT_ID=$(tenant-id)
               export TF_CLI_CONFIG_FILE="$(terraformrc.secureFilePath)"
               terraform init -backend-config="$(terraformbackend.secureFilePath)"
-              terraform plan -var-file="$(namespace).tfvars" -var="psql_login=$(psql-user)" -var="psql_password=$(psql-password)" -var="psql_password_grouper_encrypted=$(PSQL_PASSWORD_GROUPER_ENCRYPTED)" -var="aks_admin_group_object_id=$(aks-admin-group-object-id)" -var="email=$(notifyUsers)" -out=$(System.DefaultWorkingDirectory)/$(namespace).tfplan
+              terraform plan -var-file="$(namespace).tfvars" -var="psql_login=$(psql-user)" -var="psql_password=$(psql-password)" -var="psql_password_grouper_encrypted=$(PSQL_PASSWORD_GROUPER_ENCRYPTED)" -var="aks_admin_group_object_id=$(aks-admin-group-object-id)" -var="email=$(notifyUsers)" -var="grouper_system_password=$(GROUPERSYSTEMPASSWORD)" -out=$(System.DefaultWorkingDirectory)/$(namespace).tfplan
             displayName: Terraform Plan
             name: terraform_plan
             workingDirectory: terraform
