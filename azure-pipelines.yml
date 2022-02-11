@@ -24,7 +24,7 @@ stages:
               echo "##vso[task.setvariable variable=PSQL_PASSWORD_GROUPER_ENCRYPTED;]$(java -cp .:grouperClient-2.5.39.jar edu.internet2.middleware.morphString.Encrypt dontMask <<< $(psql-password) | sed 's/Type the string to encrypt (note: pasting might echo it back): The encrypted string is: //')"
             displayName: Grouper encrypt passwords
             name: grouper_encrypt
-            workingDirectory: slashRoot/opt/grouper/grouperWebapp/WEB-INF/classes
+            workingDirectory: docker/slashRoot/opt/grouper/grouperWebapp/WEB-INF/classes
           - task: DownloadSecureFile@1
             name: terraformrc
             displayName: "Download .terraformrc"
