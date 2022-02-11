@@ -97,13 +97,10 @@ stages:
               export TF_CLI_CONFIG_FILE="$(terraformrc.secureFilePath)"
               terraform init -backend-config="$(terraformbackend.secureFilePath)"
               terraform apply --auto-approve $(System.DefaultWorkingDirectory)/$(namespace).tfplan
-              # echo "##vso[task.setvariable variable=RG_NAME;isOutput=true]$(terraform output -raw rg_name)"
-              # echo "##vso[task.setvariable variable=ACR_NAME;isOutput=true]$(terraform output -raw acr_name)"
-              # echo "##vso[task.setvariable variable=AKS_NAME;isOutput=true]$(terraform output -raw aks_name)"
-              # echo "##vso[task.setvariable variable=AKV_NAME;isOutput=true]$(terraform output -raw akv_name)"
-              # echo "##vso[task.setvariable variable=MANAGED_IDENTITY_CLIENT_ID;isOutput=true]$(terraform output -raw aks_managed_identity_client_id)"
-              # echo "##vso[task.setvariable variable=MANAGED_IDENTITY_RESOURCE_ID;isOutput=true]$(terraform output -raw aks_managed_identity_resource_id)"
+              echo "##vso[task.setvariable variable=RG_NAME;isOutput=true]$(terraform output -raw rg_name)"
+              echo "##vso[task.setvariable variable=AKS_NAME;isOutput=true]$(terraform output -raw aks_name)"
 
+              # Log into Azure
               az login --service-principal --username $(client-id) --password $(client-secret) --tenant $(tenant-id)
               az account set -s $(SUBSCRIPTIONID)
 
