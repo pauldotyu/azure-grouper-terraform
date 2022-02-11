@@ -30,13 +30,18 @@ stages:
             displayName: "Download .terraformrc"
             inputs:
               secureFile: ".terraformrc"
+          - task: DownloadSecureFile@1
+            name: terraformbackend
+            displayName: "Download backend.hcl"
+            inputs:
+              secureFile: "backend.hcl"
           - script: |
               export ARM_CLIENT_ID=$(client-id)
               export ARM_CLIENT_SECRET=$(client-secret)
               export ARM_SUBSCRIPTION_ID=$(SUBSCRIPTIONID)
               export ARM_TENANT_ID=$(tenant-id)
               export TF_CLI_CONFIG_FILE="$(terraformrc.secureFilePath)"
-              terraform init
+              terraform init -backend-config="$(terraformbackend.secureFilePath)"
               terraform plan -var-file="$(namespace).tfvars" -var="psql_login=$(psql-user)" -var="psql_password=$(psql-password)" -var="psql_password_grouper_encrypted=$(PSQL_PASSWORD_GROUPER_ENCRYPTED)" -var="aks_admin_group_object_id=$(aks-admin-group-object-id)" -var="email=$(notifyUsers)" -out=$(System.DefaultWorkingDirectory)/$(namespace).tfplan
             displayName: Terraform Plan
             name: terraform_plan
@@ -72,6 +77,11 @@ stages:
             displayName: "Download .terraformrc"
             inputs:
               secureFile: ".terraformrc"
+          - task: DownloadSecureFile@1
+            name: terraformbackend
+            displayName: "Download backend.hcl"
+            inputs:
+              secureFile: "backend.hcl"
           - task: DownloadPipelineArtifact@2
             inputs:
               artifactName: tfplan
@@ -85,7 +95,7 @@ stages:
               export ARM_SUBSCRIPTION_ID=$(SUBSCRIPTIONID)
               export ARM_TENANT_ID=$(tenant-id)
               export TF_CLI_CONFIG_FILE="$(terraformrc.secureFilePath)"
-              terraform init
+              terraform init -backend-config="$(terraformbackend.secureFilePath)"
               terraform apply --auto-approve $(System.DefaultWorkingDirectory)/$(namespace).tfplan
               # echo "##vso[task.setvariable variable=RG_NAME;isOutput=true]$(terraform output -raw rg_name)"
               # echo "##vso[task.setvariable variable=ACR_NAME;isOutput=true]$(terraform output -raw acr_name)"
@@ -214,13 +224,18 @@ stages:
             displayName: "Download .terraformrc"
             inputs:
               secureFile: ".terraformrc"
+          - task: DownloadSecureFile@1
+            name: terraformbackend
+            displayName: "Download backend.hcl"
+            inputs:
+              secureFile: "backend.hcl"
           - script: |
               export ARM_CLIENT_ID=$(client-id)
               export ARM_CLIENT_SECRET=$(client-secret)
               export ARM_SUBSCRIPTION_ID=$(SUBSCRIPTIONID)
               export ARM_TENANT_ID=$(tenant-id)
               export TF_CLI_CONFIG_FILE="$(terraformrc.secureFilePath)"
-              terraform init
+              terraform init -backend-config="$(terraformbackend.secureFilePath)"
               terraform destroy -var-file="$(namespace).tfvars" -var="psql_login=$(psql-user)" -var="psql_password=$(psql-password)" -var="psql_password_grouper_encrypted=$(PSQL_PASSWORD_GROUPER_ENCRYPTED)" -var="aks_admin_group_object_id=$(aks-admin-group-object-id)" --auto-approve
             displayName: Destroy infrastructure
             workingDirectory: terraform

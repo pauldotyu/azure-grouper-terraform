@@ -169,7 +169,7 @@ resource "azurerm_kubernetes_cluster" "grouper" {
   kubernetes_version        = var.kubernetes_version # az aks get-versions -l westus2
   location                  = azurerm_resource_group.grouper.location
   resource_group_name       = azurerm_resource_group.grouper.name
-  dns_prefix                = "grouper-${local.resource_name}"
+  dns_prefix                = "aks-${local.resource_name}"
   automatic_channel_upgrade = "stable"
   sku_tier                  = "Free"
   #api_server_authorized_ip_ranges = data.http.ifconfig.body
