@@ -124,6 +124,7 @@ stages:
               fi
 
               # Apply Kubernetes manifests
+              az aks get-credentials --resource-group $(RG_NAME) --name $(AKS_NAME) --admin
               kubectl create namespace $(namespace) --dry-run=client -o yaml | kubectl apply -f -
               kubectl apply -f ../kubernetes/grouper-secrets-provider.yaml -n $(namespace)
               kubectl apply -f ../kubernetes/grouper-daemon.yaml -n $(namespace)
