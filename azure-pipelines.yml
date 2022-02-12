@@ -58,7 +58,7 @@ stages:
     dependsOn: plan
     jobs:
       - job: review_plan
-        displayName: Review Plan
+        displayName: Confirm Alan
         pool: Server
         steps:
           - task: ManualValidation@0
@@ -68,7 +68,7 @@ stages:
             displayName: Review Plan
             name: review_plan
       - job: apply
-        displayName: Terraform Apply
+        displayName: terraform apply
         condition: eq(dependencies.review_plan.result, 'Succeeded')
         dependsOn: review_plan
         steps:
@@ -134,8 +134,8 @@ stages:
             displayName: "Copy manifests"
             inputs:
               contents: $(System.DefaultWorkingDirectory)/kubernetes/*.yaml
-              targetFolder: $(Build.ArtifactStagingDirectory)/manifests
-          - publish: $(Build.ArtifactStagingDirectory)/manifests
+              targetFolder: $(Build.ArtifactStagingDirectory)
+          - publish: $(Build.ArtifactStagingDirectory)
             displayName: Publish manifests
             artifact: drop
       - job: kubectl
@@ -156,10 +156,10 @@ stages:
               az account set -s $(SUBSCRIPTIONID)
               az aks get-credentials --resource-group $(RG_NAME) --name $(AKS_NAME) --admin
               kubectl create namespace $(namespace) --dry-run=client -o yaml | kubectl apply -f -
-              kubectl apply -f ./manifests/grouper-secrets-provider.yaml -n $(namespace)
-              kubectl apply -f ./manifests/grouper-daemon.yaml -n $(namespace)
-              kubectl apply -f ./manifests/grouper-ws.yaml -n $(namespace)
-              kubectl apply -f ./manifests/grouper-ui.yaml -n $(namespace)
+              kubectl apply -f ./kubernetes/grouper-secrets-provider.yaml -n $(namespace)
+              kubectl apply -f ./kubernetes/grouper-daemon.yaml -n $(namespace)
+              kubectl apply -f ./kubernetes/grouper-ws.yaml -n $(namespace)
+              kubectl apply -f ./kubernetes/grouper-ui.yaml -n $(namespace)
               kubectl get all -n $(namespace)
             displayName: Apply Kubernetes Manifests
             name: kubectl_apply
@@ -168,7 +168,7 @@ stages:
     condition: and(ne(variables.namespace, ''), eq(variables.destroy, true))
     jobs:
       - job: do_destroy
-        displayName: Destroy
+        displayName: Confirm destroy
         pool: Server
         steps:
           - task: ManualValidation@0
