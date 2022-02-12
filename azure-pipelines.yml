@@ -58,7 +58,7 @@ stages:
     dependsOn: plan
     jobs:
       - job: review_plan
-        displayName: Confirm Alan
+        displayName: Confirm Plan
         pool: Server
         steps:
           - task: ManualValidation@0
@@ -113,7 +113,6 @@ stages:
               az feature register --name EnablePodIdentityPreview --namespace Microsoft.ContainerService
               az extension add --name aks-preview
               az extension update --name aks-preview
-
 
               pod=$(az aks show -g $(terraform output -raw rg_name) -n $(terraform output -raw aks_name) --query podIdentityProfile.enabled)
               if [ -z "$pod" ] || [ "$pod" == "false" ]
