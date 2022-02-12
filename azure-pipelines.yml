@@ -107,12 +107,14 @@ stages:
               # ACR task to build the container
               az acr build -t grouper:latest -r $(terraform output -raw acr_login_server) ../docker
 
-              # Enable Azure AD Pod Identity
+              # AKS Pod Identity enablement
               # This will be temporary until pod-identity goes GA and added via AKS addon
               az provider register --namespace Microsoft.ContainerService
               az feature register --name EnablePodIdentityPreview --namespace Microsoft.ContainerService
               az extension add --name aks-preview
               az extension update --name aks-preview
+
+
               pod=$(az aks show -g $(terraform output -raw rg_name) -n $(terraform output -raw aks_name) --query podIdentityProfile.enabled)
               if [ -z "$pod" ] || [ "$pod" == "false" ]
               then
@@ -123,17 +125,43 @@ stages:
                 echo "podIdentityProfile already enabled"
               fi
 
-              # Apply Kubernetes manifests
-              az aks get-credentials --resource-group $(RG_NAME) --name $(AKS_NAME) --admin
-              kubectl create namespace $(namespace) --dry-run=client -o yaml | kubectl apply -f -
-              kubectl apply -f ../kubernetes/grouper-secrets-provider.yaml -n $(namespace)
-              kubectl apply -f ../kubernetes/grouper-daemon.yaml -n $(namespace)
-              kubectl apply -f ../kubernetes/grouper-ws.yaml -n $(namespace)
-              kubectl apply -f ../kubernetes/grouper-ui.yaml -n $(namespace)
-              kubectl get all -n $(namespace)
+              ls -l ../kubernetes
             displayName: Terraform Apply
             name: apply
             workingDirectory: terraform
+          - task: CopyFiles@2
+            displayName: "Copy manifests"
+            inputs:
+              contents: $(System.DefaultWorkingDirectory)/kubernetes/*.yaml
+              targetFolder: $(Build.ArtifactStagingDirectory)
+          - publish: $(Build.ArtifactStagingDirectory)
+            displayName: Publish manifests
+            artifact: drop
+      - job: kubectl
+        displayName: Apply Kubernetes Manifests
+        condition: eq(dependencies.apply.result, 'Succeeded')
+        dependsOn:
+          - apply
+        variables:
+          CONTAINER_VERSION: "$(Build.BuildId)"
+          RG_NAME: $[ dependencies.apply.outputs['apply.RG_NAME'] ]
+          AKS_NAME: $[ dependencies.apply.outputs['apply.AKS_NAME'] ]
+        steps:
+          - download: current
+            displayName: Download current manifests
+            artifact: drop
+          - script: |
+              az login --service-principal --username $(client-id) --password $(client-secret) --tenant $(tenant-id)
+              az account set -s $(SUBSCRIPTIONID)
+              az aks get-credentials --resource-group $(RG_NAME) --name $(AKS_NAME) --admin
+              kubectl create namespace $(namespace) --dry-run=client -o yaml | kubectl apply -f -
+              kubectl apply -f grouper-secrets-provider.yaml -n $(namespace)
+              kubectl apply -f grouper-daemon.yaml -n $(namespace)
+              kubectl apply -f grouper-ws.yaml -n $(namespace)
+              kubectl apply -f grouper-ui.yaml -n $(namespace)
+              kubectl get all -n $(namespace)
+            displayName: Apply Kubernetes Manifests
+            name: kubectl_apply
   - stage: destroy
     displayName: Destroy
     condition: and(ne(variables.namespace, ''), eq(variables.destroy, true))
