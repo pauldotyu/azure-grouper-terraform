@@ -57,13 +57,15 @@ spec:
         - image: ${ACR_FQDN}/grouper:latest # NOTE: using latest is not best practice
           name: grouper-ui
           ports:
-            - containerPort: 443
+            - containerPort: 80
           resources: {}
           imagePullPolicy: IfNotPresent
           args: ["ui"]
           env:
-            - name: GROUPER_SELF_SIGNED_CERT
-              value: "true"
+            - name: GROUPER_USE_SSL
+              value: "false"
+            - name: GROUPER_WEBCLIENT_IS_SSL
+              value: "false"
             - name: GROUPER_RUN_SHIB_SP
               value: "false"
             - name: GROUPER_AUTO_DDL_UPTOVERSION
@@ -114,27 +116,9 @@ metadata:
   name: grouper-ui
 spec:
   ports:
-    - port: 443
+    - port: 80
       protocol: TCP
-      targetPort: 443
+      targetPort: 80
       name: grouper-ui
   selector:
     app: grouper-ui
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: grouper-ui
-  annotations:
-    kubernetes.io/ingress.class: azure/application-gateway
-spec:
-  rules:
-    - http:
-        paths:
-          - path: /
-            backend:
-              service:
-                name: grouper-ui
-                port:
-                  number: 80
-            pathType: Exact

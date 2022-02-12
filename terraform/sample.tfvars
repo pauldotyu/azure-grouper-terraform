@@ -9,3 +9,4 @@ cluster_node_count        = 1
 tags = {
   repo = "pauldotyu/azure-grouper-terraform"
 }
+custom_domain_name = "grouper.contoso.fun"

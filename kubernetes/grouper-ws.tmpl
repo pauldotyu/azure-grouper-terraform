@@ -57,13 +57,15 @@ spec:
         - image: ${ACR_FQDN}/grouper:latest # NOTE: using latest is not best practice
           name: grouper-ws
           ports:
-            - containerPort: 8443
+            - containerPort: 80
           resources: {}
           imagePullPolicy: IfNotPresent
           args: ["ws"]
           env:
-            - name: GROUPER_SELF_SIGNED_CERT
-              value: "true"
+            - name: GROUPER_USE_SSL
+              value: "false"
+            - name: GROUPER_WEBCLIENT_IS_SSL
+              value: "false"
             - name: GROUPER_WS_GROUPER_AUTH
               value: "true"
             - name: GROUPER_DATABASE_URL
@@ -103,9 +105,9 @@ metadata:
   name: grouper-ws
 spec:
   ports:
-    - port: 8443
+    - port: 80
       protocol: TCP
-      targetPort: 8443
+      targetPort: 80
       name: grouper-ws
   selector:
     app: grouper-ws

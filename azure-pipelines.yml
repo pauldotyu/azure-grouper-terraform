@@ -119,13 +119,10 @@ stages:
               then
                 echo "podIdentityProfile being enabling now..."
                 az aks update -g $(terraform output -raw rg_name) -n $(terraform output -raw aks_name) --enable-pod-identity
-                az aks pod-identity add -g $(terraform output -raw rg_name) --cluster-name $(terraform output -raw aks_name) --namespace grouper --name grouper-pod-identity --identity-resource-id $(terraform output -raw aks_managed_identity_resource_id)
+                az aks pod-identity add -g $(terraform output -raw rg_name) --cluster-name $(terraform output -raw aks_name) --namespace $(namespace) --name grouper-pod-identity --identity-resource-id $(terraform output -raw aks_managed_identity_resource_id)
               else
                 echo "podIdentityProfile already enabled"
               fi
-
-              pwd
-              ls -l ../kubernetes
             displayName: terraform apply
             name: apply
             workingDirectory: terraform
@@ -154,6 +151,21 @@ stages:
               az login --service-principal --username $(client-id) --password $(client-secret) --tenant $(tenant-id)
               az account set -s $(SUBSCRIPTIONID)
               az aks get-credentials --resource-group $(RG_NAME) --name $(AKS_NAME) --admin
+
+              # Install cert-manager
+              helm repo add jetstack https://charts.jetstack.io
+              helm repo update
+              helm install \
+                cert-manager jetstack/cert-manager \
+                --namespace cert-manager \
+                --create-namespace \
+                --version v1.7.1 \
+                --set installCRDs=true
+
+              # Deploy cluster-issuer
+              kubectl apply -f cluster-issuer-staging.yaml
+
+              # Deploy workload
               kubectl create namespace $(namespace) --dry-run=client -o yaml | kubectl apply -f -
               kubectl apply -f $(Pipeline.Workspace)/drop/kubernetes/grouper-secrets-provider.yaml -n $(namespace)
               kubectl apply -f $(Pipeline.Workspace)/drop/kubernetes/grouper-daemon.yaml -n $(namespace)

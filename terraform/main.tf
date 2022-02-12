@@ -529,8 +529,8 @@ resource "local_file" "ws" {
 }
 
 resource "local_file" "cert" {
-  filename = "../kubernetes/certificate-issuer.yaml"
-  content = templatefile("../kubernetes/certificate-issuer.tmpl",
+  filename = "../kubernetes/cluster-issuer-staging.yaml"
+  content = templatefile("../kubernetes/cluster-issuer-staging.tmpl",
     {
       EMAIL = var.email,
     }
@@ -541,8 +541,7 @@ resource "local_file" "ingress" {
   filename = "../kubernetes/grouper-ingress.yaml"
   content = templatefile("../kubernetes/grouper-ingress.tmpl",
     {
-      RESOURCE_NAME = local.resource_name,
-      LOCATION      = var.location,
+      CUSTOM_DOMAIN_NAME = var.custom_domain_name,
     }
   )
 }

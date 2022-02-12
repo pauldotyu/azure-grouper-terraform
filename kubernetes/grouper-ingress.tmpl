@@ -4,7 +4,7 @@ metadata:
   name: grouper-ui
   annotations:
     kubernetes.io/ingress.class: azure/application-gateway
-    cert-manager.io/issuer: letsencrypt-staging
+    cert-manager.io/cluster-issuer: letsencrypt-staging
     cert-manager.io/acme-challenge-type: http01
 spec:
   rules:
@@ -16,9 +16,9 @@ spec:
               service:
                 name: grouper-ui
                 port:
-                  number: 443
-      host: ${RESOURCE_NAME}.${LOCATION}.cloudapp.azure.com
+                  number: 80
+      host: ${CUSTOM_DOMAIN_NAME}
   tls:
     - hosts:
-        - ${RESOURCE_NAME}.${LOCATION}.cloudapp.azure.com
+        - ${CUSTOM_DOMAIN_NAME}
       secretName: grouper-tls

@@ -65,3 +65,7 @@ variable "psql_password_grouper_encrypted" {
 variable "grouper_system_password" {
   type = string
 }
+
+variable "custom_domain_name" {
+  type = string
+}
