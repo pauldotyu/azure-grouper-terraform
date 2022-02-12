@@ -156,10 +156,10 @@ stages:
               az account set -s $(SUBSCRIPTIONID)
               az aks get-credentials --resource-group $(RG_NAME) --name $(AKS_NAME) --admin
               kubectl create namespace $(namespace) --dry-run=client -o yaml | kubectl apply -f -
-              kubectl apply -f ./kubernetes/grouper-secrets-provider.yaml -n $(namespace)
-              kubectl apply -f ./kubernetes/grouper-daemon.yaml -n $(namespace)
-              kubectl apply -f ./kubernetes/grouper-ws.yaml -n $(namespace)
-              kubectl apply -f ./kubernetes/grouper-ui.yaml -n $(namespace)
+              kubectl apply -f $(Pipeline.Workspace)/drop/kubernetes/grouper-secrets-provider.yaml -n $(namespace)
+              kubectl apply -f $(Pipeline.Workspace)/drop/kubernetes/grouper-daemon.yaml -n $(namespace)
+              kubectl apply -f $(Pipeline.Workspace)/drop/kubernetes/grouper-ws.yaml -n $(namespace)
+              kubectl apply -f $(Pipeline.Workspace)/drop/kubernetes/grouper-ui.yaml -n $(namespace)
               kubectl get all -n $(namespace)
             displayName: Apply Kubernetes Manifests
             name: kubectl_apply
