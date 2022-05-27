@@ -190,7 +190,7 @@ resource "azurerm_kubernetes_cluster" "grouper" {
 
   network_profile {
     network_plugin     = "azure"
-    load_balancer_sku  = "Standard"
+    load_balancer_sku  = "standard"
     service_cidr       = "10.255.0.0/24"
     dns_service_ip     = "10.255.0.10"
     docker_bridge_cidr = "192.168.0.1/16"
@@ -202,46 +202,24 @@ resource "azurerm_kubernetes_cluster" "grouper" {
     outbound_type = "userAssignedNATGateway"
   }
 
+  azure_policy_enabled = true
 
-  addon_profile {
-    aci_connector_linux {
-      enabled = false
-    }
+  key_vault_secrets_provider {
+    secret_rotation_enabled  = true
+    secret_rotation_interval = "10m"
+  }
 
-    azure_policy {
-      enabled = true
-    }
+  ingress_application_gateway {
+    # this does not work - when you create an ingress, nothing gets configured on the app gateway
+    #gateway_id = azurerm_application_gateway.ag.id
+    # this does work
+    subnet_id = azurerm_subnet.ag.id
+  }
 
-    azure_keyvault_secrets_provider {
-      enabled                  = true
-      secret_rotation_enabled  = true
-      secret_rotation_interval = "10m"
-    }
+  open_service_mesh_enabled = false
 
-    http_application_routing {
-      enabled = false
-    }
-
-    ingress_application_gateway {
-      enabled = true
-      # this does not work - when you create an ingress, nothing gets configured on the app gateway
-      #gateway_id = azurerm_application_gateway.ag.id
-      # this does work
-      subnet_id = azurerm_subnet.ag.id
-    }
-
-    open_service_mesh {
-      enabled = false
-    }
-
-    kube_dashboard {
-      enabled = false
-    }
-
-    oms_agent {
-      enabled                    = true
-      log_analytics_workspace_id = azurerm_log_analytics_workspace.grouper.id
-    }
+  oms_agent {
+    log_analytics_workspace_id = azurerm_log_analytics_workspace.grouper.id
   }
 
   auto_scaler_profile {
@@ -256,13 +234,10 @@ resource "azurerm_kubernetes_cluster" "grouper" {
     }
   }
 
-  role_based_access_control {
-    enabled = true
-    azure_active_directory {
-      managed                = true
-      tenant_id              = data.azurerm_client_config.current.tenant_id
-      admin_group_object_ids = [var.aks_admin_group_object_id]
-    }
+  azure_active_directory_role_based_access_control {
+    managed                = true
+    tenant_id              = data.azurerm_client_config.current.tenant_id
+    admin_group_object_ids = [var.aks_admin_group_object_id]
   }
 
   tags = merge(var.tags, { "creationSource" = "terraform" })
@@ -273,7 +248,7 @@ resource "azurerm_kubernetes_cluster_node_pool" "grouper" {
   kubernetes_cluster_id = azurerm_kubernetes_cluster.grouper.id
   vm_size               = var.cluster_node_pool_vm_size
   vnet_subnet_id        = azurerm_subnet.aks.id
-  availability_zones    = [1, 2, 3]
+  zones                 = [1, 2, 3]
   enable_auto_scaling   = true
   max_count             = 10
   min_count             = 3
@@ -341,7 +316,7 @@ resource "azurerm_key_vault_access_policy" "kv_current" {
     "Import",
     "List",
     "ListIssuers",
-    "Managecontacts",
+    "ManageContacts",
     "ManageIssuers",
     "Purge",
     "Recover",

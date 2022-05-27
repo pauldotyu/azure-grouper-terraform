@@ -42,6 +42,20 @@ PSQL_PASSWORD_GROUPER_ENCRYPTED=$(java -cp .:grouperClient-2.5.39.jar edu.intern
 
 Use this to provision the infrastructure you will need for this solution.
 
+Initialize your backend by adding a file called backend.hcl. My project is connected to Terraform Cloud as the remote state provider and the contents look like this:
+
+```hcl
+workspaces { name = "azure-virtual-desktop-ops-terraform" }
+hostname     = "app.terraform.io"
+organization = "contosouniversity"
+```
+
+Now initialize by running this command:
+
+```sh
+terraform init -backend-config=backend.hcl
+```
+
 I have provided sample variable values you can use in the `sample.tfvars` files to get started. It does not include any secrets so you will need to provide the following:
 
 - `psql_login` - This is your login for the PostgreSQL server username
