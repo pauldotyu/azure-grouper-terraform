@@ -1,12 +1,16 @@
 provider "azurerm" {
   features {
+    resource_group {
+      prevent_deletion_if_contains_resources = false
+    }
+
     key_vault {
       purge_soft_delete_on_destroy = false
     }
   }
 }
 
-data "azurerm_client_config" "current" {}
+data "azuread_client_config" "current" {}
 
 # data "http" "ifconfig" {
 #   url = "http://ifconfig.me"
@@ -61,18 +65,19 @@ resource "azurerm_log_analytics_workspace" "grouper" {
 ################################
 
 resource "azurerm_postgresql_server" "grouper" {
-  name                         = "psql${local.resource_name_unique}"
-  resource_group_name          = azurerm_resource_group.grouper.name
-  location                     = azurerm_resource_group.grouper.location
-  sku_name                     = "GP_Gen5_4"
-  storage_mb                   = "5120"
-  backup_retention_days        = "7"
-  geo_redundant_backup_enabled = false
-  auto_grow_enabled            = true
-  administrator_login          = var.psql_login
-  administrator_login_password = var.psql_password
-  version                      = "9.6"
-  ssl_enforcement_enabled      = false
+  name                             = "psql${local.resource_name_unique}"
+  resource_group_name              = azurerm_resource_group.grouper.name
+  location                         = azurerm_resource_group.grouper.location
+  sku_name                         = "GP_Gen5_4"
+  storage_mb                       = "5120"
+  backup_retention_days            = "7"
+  geo_redundant_backup_enabled     = false
+  auto_grow_enabled                = true
+  administrator_login              = var.psql_login
+  administrator_login_password     = var.psql_password
+  version                          = "9.6"
+  ssl_enforcement_enabled          = false
+  ssl_minimal_tls_version_enforced = "TLSEnforcementDisabled"
 
   threat_detection_policy {
     disabled_alerts      = []
@@ -236,7 +241,7 @@ resource "azurerm_kubernetes_cluster" "grouper" {
 
   azure_active_directory_role_based_access_control {
     managed                = true
-    tenant_id              = data.azurerm_client_config.current.tenant_id
+    tenant_id              = data.azuread_client_config.current.tenant_id
     admin_group_object_ids = [var.aks_admin_group_object_id]
   }
 
@@ -292,7 +297,7 @@ resource "azurerm_key_vault" "grouper" {
   resource_group_name             = azurerm_resource_group.grouper.name
   enabled_for_disk_encryption     = true
   enabled_for_template_deployment = true
-  tenant_id                       = data.azurerm_client_config.current.tenant_id
+  tenant_id                       = data.azuread_client_config.current.tenant_id
   soft_delete_retention_days      = 90
   purge_protection_enabled        = false
   sku_name                        = "standard"
@@ -303,8 +308,8 @@ resource "azurerm_key_vault" "grouper" {
 # Grant the current login context full access to the key vault
 resource "azurerm_key_vault_access_policy" "kv_current" {
   key_vault_id = azurerm_key_vault.grouper.id
-  tenant_id    = data.azurerm_client_config.current.tenant_id
-  object_id    = data.azurerm_client_config.current.object_id
+  tenant_id    = data.azuread_client_config.current.tenant_id
+  object_id    = data.azuread_client_config.current.object_id
 
   certificate_permissions = [
     "Backup",
@@ -471,7 +476,7 @@ resource "local_file" "secrets" {
   content = templatefile("../kubernetes/grouper-secrets-provider.tmpl",
     {
       KV_NAME   = azurerm_key_vault.grouper.name,
-      TENANT_ID = data.azurerm_client_config.current.tenant_id
+      TENANT_ID = data.azuread_client_config.current.tenant_id
     }
   )
 }

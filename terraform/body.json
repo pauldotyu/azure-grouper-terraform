@@ -1,0 +1,9 @@
+{
+  "name": "kubernetes-federated-credential",
+  "issuer": "https://oidc.prod-aks.azure.com/344de292-3ab9-4fe0-ac8c-42956b1ab6e9/",
+  "subject": "system:serviceaccount:default:grouper",
+  "description": "Kubernetes service account federated credential",
+  "audiences": [
+    "api://AzureADTokenExchange"
+  ]
+}

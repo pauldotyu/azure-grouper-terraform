@@ -26,3 +26,7 @@ output "aks_name" {
 output "aks_managed_identity_resource_id" {
   value = azurerm_kubernetes_cluster.grouper.kubelet_identity[0].user_assigned_identity_id
 }
+
+output "akv_name" {
+  value = azurerm_key_vault.grouper.name
+}
