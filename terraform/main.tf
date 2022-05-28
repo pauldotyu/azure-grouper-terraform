@@ -28,7 +28,7 @@ resource "random_integer" "grouper" {
 
 locals {
   resource_name        = format("%s%s", "grouper", random_pet.grouper.id)
-  resource_name_unique = format("%s%s", "grouper", random_integer.grouper.result)
+  resource_name_unique = format("%s%s%s", "grouper", random_pet.grouper.id, random_integer.grouper.result)
 }
 
 resource "random_password" "grouper" {
